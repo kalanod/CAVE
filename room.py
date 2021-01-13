@@ -22,7 +22,9 @@ lvl = 1
 hp = 10
 maxhp = 10
 money = 0
-
+seeds = {"солнечник": 0,
+         "ведьмин стебель": 0,
+         "хрустальник": 0}
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -77,8 +79,10 @@ def draw_room2(screen, coords):
     screen.blit(image, coords)
 
 
-def draw_room3(screen, coords):
+def draw_room3(screen, coords, id_cell):
     # комната с сундуком
+    rand = random.randint(0, 2)
+    map[id_cell][1] = rand
     image = pygame.transform.scale(load_image("shop.png", -1), (100, 100))
     screen.blit(image, coords)
 
@@ -138,17 +142,19 @@ def ask_room(screen, coords, idcell):
         elif id == 4:
             ask_room4(screen, coords)
         elif id == 5:
-            ask_room5(screen, coords)
+            ask_room5(screen, coords, idcell)
         elif id == 6:
             ask_room6(screen, coords)
         elif id == 7:
-            ask_room7(screen, coords)
+            ask_room7(screen, coords, idcell)
         elif id == 8:
-            ask_room8(screen, coords)
+            ask_room8(screen, coords, idcell)
         elif id == 9:
-            ask_room9(screen, coords)
+            ask_room9(screen, coords, idcell)
         elif id == 10:
             ask_room10(screen, coords)
+        elif id == 11:
+            ask_room11(screen)
 
 
 def ask_room1(screen, coords, idcell):
@@ -165,7 +171,7 @@ def ask_room1(screen, coords, idcell):
 
 
 def ask_room2(screen, coords):
-    pygame.draw.rect(screen, (255, 0, 0), (*coords, 50, 10))
+    pass
 
 
 def ask_room3(screen, coords, atribut):
@@ -199,8 +205,27 @@ def ask_room4(screen, coords):
         screen.blit(line, line_rect)
 
 
-def ask_room5(screen, coords):
-    pygame.draw.rect(screen, (255, 0, 0), coords, 50, 10)
+def ask_room5(screen, coords, id):
+    global maxhp, lvl
+    # благовония
+    if map[id][1] == 0:
+        map[id][1] = False
+    else:
+        rand = random.randint(0, 5)
+        map[id][1] -= 1
+
+        font = pygame.font.Font(None, 50)
+        if rand == 0:
+            line = font.render(str("Вы потянули лодышку -1 ур "), True, pygame.Color("Blue"))
+            lvl -= 1
+        else:
+            maxhp += 1
+            line = font.render(str("Ваш максимальный хп теперь " + str(maxhp)), True, pygame.Color("Blue"))
+        line_rect = line.get_rect()
+        line_rect.top = size[1] / 2 - 100
+        line_rect.left = size[0] / 2 - line_rect.width / 2
+        pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
+        screen.blit(line, line_rect)
 
 
 def ask_room6(screen, coords):
@@ -217,21 +242,62 @@ def ask_room6(screen, coords):
         screen.blit(line, line_rect)
 
 
+def renderText(screen, text):
+    font = pygame.font.Font(None, 50)
+    line = font.render(text, True, pygame.Color("Blue"))
+    line_rect = line.get_rect()
+    line_rect.top = size[1] / 2 - 100
+    line_rect.left = size[0] / 2 - line_rect.width / 2
+    pygame.draw.rect(screen, (255, 0, 0), (300, 300, 150, 30))
+    screen.blit(line, line_rect)
 
-def ask_room7(screen, coords):
-    pygame.draw.rect(screen, (255, 0, 0), coords, 50, 10)
+
+def ask_room7(screen, coords, id):
+    global hp
+    # подозрительный
+    if map[id][1] == 1:
+        hp -= 4
+        stuff.append(random.choice(weapons))
+        renderText(screen, str(stuff[-1] + "Впился вам в бок забрав 4 хп, но силуэт исчез, и похоже, теперь он ваш"))
+    if map[id][1] == 2:
+        if len(stuff) >= 1:
+            renderText(screen, str(stuff[-1] + "Ваш " + stuff[-1] + " был украден"))
+            stuff.pop(-1)
+            hp = maxhp
 
 
-def ask_room8(screen, coords):
-    pygame.draw.rect(screen, (255, 0, 0), coords, 50, 10)
+def ask_room8(screen, coords, id):
+    global hp, maxhp
+    rand = random.randint(0, 5)
+    if rand == 0:
+        renderText(screen, "Ты истинное пораждение тьмы! я помогу тебе")
+        maxhp += 2
+    else:
+        renderText(screen, "Вас пронзила тысяча теневых клинков")
+        hp -= 4
 
 
-def ask_room9(screen, coords):
-    pygame.draw.rect(screen, (255, 0, 0), coords, 50, 10)
+def ask_room9(screen, coords, id):
+    global hp, money
+    rand = random.randint(0, 5)
+    if rand < 2:
+        money += 1
+        renderText(screen, "Это не зелье это монета!")
+    elif rand < 5:
+        hp -= 2
+        renderText(screen, "Горько! это было зелье вреда!")
+    elif rand == 5:
+        hp -= 5
+        renderText(screen, "Горько! это было большое зелье вреда!")
+    map[id][1] = False
 
 
 def ask_room10(screen, coords):
     pygame.draw.rect(screen, (255, 0, 0), coords, 50, 10)
+
+def ask_room11(screen):
+    renderText(screen, "Получено семечно солнечнико")
+    seeds["солнечник"] += 1
 
 
 j = 0
