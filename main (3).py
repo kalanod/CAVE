@@ -35,11 +35,12 @@ def load_image(name, colorkey=None):
 
 
 def find_room(screen, coords, id_list):
-    #print(map[id_list[0]][id_list[1]][0])
+    if len(map[id_list[0]][id_list[1]]) == 1:
+        return
     id = map[id_list[0]][id_list[1]][0]
     coords = (coords[0] + 50, coords[1]+10)
     if id == 1:
-        draw_room1(screen, coords)
+        draw_room1(screen, coords, id_list)
     elif id == 2:
         draw_room2(screen, coords)
     elif id == 3:
@@ -51,7 +52,7 @@ def find_room(screen, coords, id_list):
     elif id == 6:
         draw_room6(screen, coords)
     elif id == 7:
-        draw_room7(screen, coords)
+        draw_room7(screen, coords, id_list)
     elif id == 8:
         draw_room8(screen, coords)
     elif id == 9:
@@ -60,10 +61,12 @@ def find_room(screen, coords, id_list):
         draw_room10(screen, coords)
 
 
-def draw_room1(screen, coords):
+def draw_room1(screen, coords, id):
     # комната с сундуком
-
-    image = pygame.transform.scale(load_image("chest.png", -1), (80, 80))
+    if map[id[0]][id[1]][1] == 0:
+        image = pygame.transform.scale(load_image("chest2.png", -1), (80, 80))
+    else:
+        image = pygame.transform.scale(load_image("chest.png", -1), (80, 80))
     screen.blit(image, coords)
 
 
@@ -99,8 +102,11 @@ def draw_room6(screen, coords):
     screen.blit(image, coords)
 
 
-def draw_room7(screen, coords):
+def draw_room7(screen, coords, id):
     # комната с запахом благовоний
+    if map[id[0]][id[1]][1] > 0:
+        map[id[0]][id[1]][1] = random.randint(-4, -1)
+    print(map[id[0]][id[1]][1])
     image = pygame.transform.scale(load_image("meditation.png", -1), (100, 100))
     screen.blit(image, coords)
 
@@ -123,9 +129,7 @@ def draw_room10(screen, coords):
     screen.blit(image, coords)
 
 def ask_room(screen, coords, id_list):
-    print(map[id_list[0]][id_list[1]])
-    if True:
-
+    if len(map[id_list[0]][id_list[1]]) == 1:
         return
     was = map[id_list[0]][id_list[1]][1]
     id = map[id_list[0]][id_list[1]][0]
@@ -155,6 +159,7 @@ def ask_room(screen, coords, id_list):
 
 
 def ask_room1(screen, coords, idcell):
+
     drop = random.choice(weapons)
     stuff.append(drop)
     font = pygame.font.Font(None, 50)
@@ -162,9 +167,9 @@ def ask_room1(screen, coords, idcell):
     line_rect = line.get_rect()
     line_rect.top = size[1] / 2 - 100
     line_rect.left = size[0] / 2 - line_rect.width / 2
-    pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
     screen.blit(line, line_rect)
     map[idcell[0]][idcell[1]][1] = 0
+
 
 
 def ask_room2(screen, coords):
@@ -181,7 +186,7 @@ def ask_room3(screen, coords, atribut):
             line_rect = line.get_rect()
             line_rect.top = size[1] / 2 - 100
             line_rect.left = size[0] / 2 - line_rect.width / 2
-            pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
+
             screen.blit(line, line_rect)
             stuff.pop(-1)
             money += 5
@@ -194,41 +199,23 @@ def ask_room3(screen, coords, atribut):
             line_rect = line.get_rect()
             line_rect.top = size[1] / 2 - 100
             line_rect.left = size[0] / 2 - line_rect.width / 2
-            pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
             screen.blit(line, line_rect)
 
 
 def ask_room4(screen, coords):
-    global money
-    # Покупаем оружее
+    global hp, maxhp
+    rand = random.randint(0, 5)
+    if rand == 0:
+        renderText(screen, "Ты истинное пораждение тьмы! я помогу тебе")
+        maxhp += 2
+    else:
+        renderText(screen, "Вас пронзила тысяча теневых клинков")
+        hp -= 4
 
 
 
 
 def ask_room5(screen, coords, id):
-    global maxhp, lvl
-    # благовония
-    if map[id][1] == 0:
-        map[id][1] = False
-    else:
-        rand = random.randint(0, 5)
-        map[id][1] -= 1
-
-        font = pygame.font.Font(None, 50)
-        if rand == 0:
-            line = font.render(str("Вы потянули лодышку -1 ур "), True, pygame.Color("Blue"))
-            lvl -= 1
-        else:
-            maxhp += 1
-            line = font.render(str("Ваш максимальный хп теперь " + str(maxhp)), True, pygame.Color("Blue"))
-        line_rect = line.get_rect()
-        line_rect.top = size[1] / 2 - 100
-        line_rect.left = size[0] / 2 - line_rect.width / 2
-        pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
-        screen.blit(line, line_rect)
-
-
-def ask_room6(screen, coords):
     global money, ticket
     if money >= 1:
         money -= 1
@@ -242,39 +229,54 @@ def ask_room6(screen, coords):
         screen.blit(line, line_rect)
 
 
-def renderText(screen, text):
-    font = pygame.font.Font(None, 50)
-    line = font.render(text, True, pygame.Color("Blue"))
-    line_rect = line.get_rect()
-    line_rect.top = size[1] / 2 - 100
-    line_rect.left = size[0] / 2 - line_rect.width / 2
-    pygame.draw.rect(screen, (255, 0, 0), (300, 300, 150, 30))
-    screen.blit(line, line_rect)
 
-
-def ask_room7(screen, coords, id):
+def ask_room6(screen, coords, id):
     global hp
     # подозрительный
-    if map[id][1] == 1:
+    if map[id[0]][id[1]][1] == 1:
         hp -= 4
         stuff.append(random.choice(weapons))
         renderText(screen, str(stuff[-1] + "Впился вам в бок забрав 4 хп, но силуэт исчез, и похоже, теперь он ваш"))
-    if map[id][1] == 2:
+    if map[id[0]][id[1]][1] == 2:
         if len(stuff) >= 1:
             renderText(screen, str(stuff[-1] + "Ваш " + stuff[-1] + " был украден"))
             stuff.pop(-1)
             hp = maxhp
 
 
-def ask_room8(screen, coords, id):
-    global hp, maxhp
+
+def renderText(screen, text):
+    font = pygame.font.Font(None, 50)
+    line = font.render(text, True, pygame.Color("Blue"))
+    line_rect = line.get_rect()
+    line_rect.top = size[1] / 2 - 100
+    line_rect.left = size[0] / 2 - line_rect.width / 2
+    pygame.draw.rect(screen, (255, 0, 0), (line_rect.x - 10, line_rect.y, line_rect.width + 20, line_rect.height + 10))
+    screen.blit(line, line_rect)
+
+
+def ask_room7(screen, coords, id):
+    global maxhp, lvl
     rand = random.randint(0, 5)
+    map[id[0]][id[1]][1] += 1
+
+    font = pygame.font.Font(None, 50)
     if rand == 0:
-        renderText(screen, "Ты истинное пораждение тьмы! я помогу тебе")
-        maxhp += 2
+        line = font.render(str("Вы потянули лодышку -1 ур "), True, pygame.Color("Blue"))
+        lvl -= 1
     else:
-        renderText(screen, "Вас пронзила тысяча теневых клинков")
-        hp -= 4
+        maxhp += 1
+        line = font.render(str("Ваш максимальный хп теперь " + str(maxhp)), True, pygame.Color("Blue"))
+    line_rect = line.get_rect()
+    line_rect.top = size[1] / 2 - 100
+    line_rect.left = size[0] / 2 - line_rect.width / 2
+    pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
+    screen.blit(line, line_rect)
+
+
+
+def ask_room8(screen, coords, id):
+    pass
 
 
 def ask_room9(screen, coords, id):
@@ -421,6 +423,7 @@ x1, y1 = 9, 10
 dog_surf = load_image('hero.png', -1)
 board.render(screen, x, y)
 while True:
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
@@ -433,6 +436,7 @@ while True:
                 else:
                     t1 += 1
                 screen.fill((0, 0, 0))
+                board.render(screen, x, y)
             if event.key == pygame.K_DOWN:
                 t1 += 1
                 if board.map[t][t1][0]:
@@ -441,6 +445,7 @@ while True:
                 else:
                     t1 -= 1
                 screen.fill((0, 0, 0))
+                board.render(screen, x, y)
             if event.key == pygame.K_LEFT:
                 t -= 1
                 if board.map[t][t1][0]:
@@ -449,6 +454,7 @@ while True:
                 else:
                     t += 1
                 screen.fill((0, 0, 0))
+                board.render(screen, x, y)
             if event.key == pygame.K_RIGHT:
                 t += 1
                 if board.map[t][t1][0]:
@@ -457,10 +463,17 @@ while True:
                 else:
                     t -= 1
                 screen.fill((0, 0, 0))
+                board.render(screen, x, y)
             if event.key == pygame.K_z:
+                screen.fill((0, 0, 0))
+                board.render(screen, x, y)
                 ask_room(screen, (600, 600), (x1, y1))
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+                exit()
 
-    board.render(screen, x, y)
+
     dog_rect = dog_surf.get_rect(bottomright=(z, z))
     screen.blit(dog_surf, dog_rect)
 
