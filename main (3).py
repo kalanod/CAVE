@@ -308,6 +308,27 @@ def ask_room11(screen):
     seeds["солнечник"] += 1
 
 
+def start(screen, size, position=False):
+    startImage = pygame.transform.scale(load_image("start.png"), (800, 700))
+    screen.blit(startImage, (0, 0))
+    startImage = pygame.transform.scale(load_image("logo.png", -1), (400, 300))
+    w = startImage.get_width()
+    h = startImage.get_height()
+    screen.blit(startImage, (size[0] / 2 - w / 2, size[0] / 2 - h / 2))
+    if position:
+        if position[0] in range(300, 500) and\
+                position[1] in range(470, 600):
+            startImage = pygame.transform.scale(load_image("btnStart2.png", -1), (220, 180))
+        else:
+            startImage = pygame.transform.scale(load_image("btnStart.png", -1), (200, 160))
+    else:
+        startImage = pygame.transform.scale(load_image("btnStart.png", -1), (200, 160))
+    w = startImage.get_width()
+    h = startImage.get_height()
+    screen.blit(startImage, (size[0] / 2 - w / 2, size[0] / 2 - h / 2 + 150))
+
+
+
 def ask_room12(screen):
     global transition
     transition = True
@@ -420,13 +441,31 @@ class Dungeon:
         self.id_exit = random.choice(list(self.colekt_room.keys()))
 
 
+pygame.init()
+size = 800, 700
+screen = pygame.display.set_mode((size))
 floor = 1
+start(screen, size)
+ex = False
+while True:
+    pygame.display.flip()
+    for i in pygame.event.get():
+        if i.type == pygame.QUIT:
+            exit()
+        if i.type == pygame.MOUSEMOTION:
+            start(screen, size, i.pos)
+        elif i.type == pygame.MOUSEBUTTONDOWN:
+            position = i.pos
+            if position[0] in range(300, 500) and\
+                position[1] in range(470, 600):
+                ex = True
+            print("DASDA")
+    if ex:
+        break
+
 while floor != 6:
-    pygame.init()
-    size = 800, 700
-    karta = pygame.display.set_mode((size))
-    screen = pygame.display.set_mode((size))
     board = Dungeon(20, 20)
+    karta = pygame.display.set_mode((size))
     x = 1475
     y = 1675
     board.generation()

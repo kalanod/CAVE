@@ -1,1 +1,1 @@
-print("KALAN")
+print("KAAN")
