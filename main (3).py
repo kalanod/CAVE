@@ -364,7 +364,7 @@ def dethscreen(screen, size, position=False):
     h = startImage.get_height()
     screen.blit(startImage, (size[0] / 2 - w / 2, size[0] / 2 - h / 2 + 150))
 
-
+#sd
 def deth():
     global maxhp, hp, stuff, ex
     ex = False
