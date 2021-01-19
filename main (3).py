@@ -309,6 +309,7 @@ def ask_room11(screen):
 
 
 def start(screen, size, position=False):
+    global focus
     startImage = pygame.transform.scale(load_image("start.png"), (800, 700))
     screen.blit(startImage, (0, 0))
     startImage = pygame.transform.scale(load_image("logo.png", -1), (400, 300))
@@ -316,17 +317,77 @@ def start(screen, size, position=False):
     h = startImage.get_height()
     screen.blit(startImage, (size[0] / 2 - w / 2, size[0] / 2 - h / 2))
     if position:
-        if position[0] in range(300, 500) and\
+        if position[0] in range(300, 500) and \
                 position[1] in range(470, 600):
             startImage = pygame.transform.scale(load_image("btnStart2.png", -1), (220, 180))
+            if not focus:
+                click.play()
+                focus = True
         else:
             startImage = pygame.transform.scale(load_image("btnStart.png", -1), (200, 160))
+            focus = False
     else:
         startImage = pygame.transform.scale(load_image("btnStart.png", -1), (200, 160))
+        focus = False
     w = startImage.get_width()
     h = startImage.get_height()
     screen.blit(startImage, (size[0] / 2 - w / 2, size[0] / 2 - h / 2 + 150))
 
+
+focus = False
+
+
+def dethscreen(screen, size, position=False):
+    global focus
+    startImage = pygame.transform.scale(load_image("bones.png", -1), (400, 300))
+    w = startImage.get_width()
+    h = startImage.get_height()
+    screen.blit(startImage, (size[0] / 2 - w / 2 - 200, size[0] / 2 - h / 2))
+    startImage = pygame.transform.scale(load_image("bones.png", -1), (400, 300))
+    w = startImage.get_width()
+    h = startImage.get_height()
+    screen.blit(startImage, (size[0] / 2 - w / 2 + 200, size[0] / 2 - h / 2))
+    if position:
+        if position[0] in range(300, 500) and \
+                position[1] in range(470, 600):
+            startImage = pygame.transform.scale(load_image("btnReStart2.png", -1), (220, 180))
+            if not focus:
+                click.play()
+                focus = True
+        else:
+            startImage = pygame.transform.scale(load_image("btnReStart.png", -1), (200, 160))
+            focus = False
+    else:
+        startImage = pygame.transform.scale(load_image("btnReStart.png", -1), (200, 160))
+        focus = False
+    w = startImage.get_width()
+    h = startImage.get_height()
+    screen.blit(startImage, (size[0] / 2 - w / 2, size[0] / 2 - h / 2 + 150))
+
+
+def deth():
+    global maxhp, hp, stuff, ex
+    ex = False
+    while True:
+        pygame.display.flip()
+        for i in pygame.event.get():
+            if i.type == pygame.KEYDOWN:
+                dethscreen(screen, size)
+            if i.type == pygame.QUIT:
+                exit()
+            if i.type == pygame.MOUSEMOTION:
+                dethscreen(screen, size, i.pos)
+            elif i.type == pygame.MOUSEBUTTONDOWN:
+                position = i.pos
+                if position[0] in range(300, 500) and \
+                        position[1] in range(470, 600):
+                    ex = True
+                print("DASDA")
+        if ex:
+            break
+    maxhp = 10
+    hp = maxhp
+    stuff = []
 
 
 def ask_room12(screen):
@@ -447,6 +508,10 @@ screen = pygame.display.set_mode((size))
 floor = 1
 start(screen, size)
 ex = False
+click = pygame.mixer.Sound("data/click.mp3")
+tap = pygame.mixer.Sound("data/tap.mp3")
+pygame.mixer.music.load("data/enchantment.ogg")
+pygame.mixer.music.play(loops=600)
 while True:
     pygame.display.flip()
     for i in pygame.event.get():
@@ -456,8 +521,8 @@ while True:
             start(screen, size, i.pos)
         elif i.type == pygame.MOUSEBUTTONDOWN:
             position = i.pos
-            if position[0] in range(300, 500) and\
-                position[1] in range(470, 600):
+            if position[0] in range(300, 500) and \
+                    position[1] in range(470, 600):
                 ex = True
             print("DASDA")
     if ex:
@@ -483,6 +548,7 @@ while floor != 6:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     t1 -= 1
+                    tap.play()
                     if board.map[t][t1][0]:
                         y -= 200
                         y1 -= 1
@@ -491,6 +557,7 @@ while floor != 6:
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
                 if event.key == pygame.K_DOWN:
+                    tap.play()
                     t1 += 1
                     if board.map[t][t1][0]:
                         y += 200
@@ -500,6 +567,7 @@ while floor != 6:
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
                 if event.key == pygame.K_LEFT:
+                    tap.play()
                     t -= 1
                     if board.map[t][t1][0]:
                         x -= 200
@@ -509,6 +577,7 @@ while floor != 6:
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
                 if event.key == pygame.K_RIGHT:
+                    tap.play()
                     t += 1
                     if board.map[t][t1][0]:
                         x += 200
@@ -525,6 +594,21 @@ while floor != 6:
                     pygame.quit()
                     sys.exit()
                     exit()
+        if hp <= 0:
+            deth()
+            floor = 0
+            board = Dungeon(20, 20)
+            karta = pygame.display.set_mode((size))
+            x = 1475
+            y = 1675
+            board.generation()
+            t = 9
+            t1 = 10
+            z = 500
+            transition = False
+            x1, y1 = 9, 10
+            dog_surf = load_image('Sednev.jpg', -1)
+            board.render(screen, x, y)
         if transition:
             floor += 1
             transition = False
