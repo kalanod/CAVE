@@ -193,12 +193,15 @@ def ask_room2(screen, coords):
     global bonus_power
     attack_power = 2
     hp_monstor = 10
+    flag = False
+    flag_1 = False
     maxhp_monstor = 10
     screen1 = pygame.display.set_mode(size)
     dog_surf1 = load_image('monstor.png', -1)
     fight = False
     col = 10
     close = True
+    damage = 0
     while close:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -210,24 +213,34 @@ def ask_room2(screen, coords):
                         damage = col // (760 // hp_monstor)
                         if damage > hp_monstor / 2:
                             damage = hp_monstor / 2 - (damage - hp_monstor / 2)
-                        print(damage + bonus_power)
                         hp_monstor -= damage * 2 + bonus_power
                         if hp_monstor <= 0:
                             close = False
                         hp -= attack_power
                         if hp <= 0:
-                            pass
-                            # сдесь экран смерти
+                            close = False
                         col = 10
                     else:
                         fight = True
         screen.fill((0, 0, 0))
+        if flag_1:
+            font = pygame.font.Font(None, 50)
+            text = font.render(
+                'Вы нанесли ' + str(damage * 2 + bonus_power) + ' урона. Вам нанесли ' + str(attack_power), True,
+                (255, 0, 0))
+            place = text.get_rect(center=(400, 400))
+            screen.blit(text, place)
         dog_rect1 = dog_surf1.get_rect(bottomright=(240, 180))
         dog_rect = dog_surf.get_rect(bottomright=(770, 170))
         screen1.blit(dog_surf1, dog_rect1)
         screen1.blit(dog_surf, dog_rect)
         if fight:
-            col = board.render_fight_1(screen, x, y, col, maxhp_monstor, hp_monstor)
+            if col >= 770:
+                flag = True
+            if col <= 10:
+                flag = False
+            flag_1 = True
+            col = board.render_fight_1(screen, x, y, col, maxhp_monstor, hp_monstor, flag)
         else:
             board.render_fight(screen, x, y, maxhp_monstor, hp_monstor)
         pygame.display.flip()
@@ -652,7 +665,7 @@ class Dungeon:
         place = text.get_rect(center=(200, 600))
         screen.blit(text, place)
 
-    def render_fight_1(self, screen, x1, y1, col, maxhp_monstor, hp_monstor):
+    def render_fight_1(self, screen, x1, y1, col, maxhp_monstor, hp_monstor, flag):
         pygame.draw.rect(screen, (255, 255, 255),
                          (770, maxhp1, 15, maxhp * 10))
         pygame.draw.rect(screen, (255, 0, 0),
@@ -667,7 +680,11 @@ class Dungeon:
                          (385, 600, 15, 75), 0)
         pygame.draw.rect(screen, (0, 255, 0),
                          (col, 600, 15, 75), 0)
-        col += 0.2
+        if flag:
+            col -= 2
+        else:
+            col += 2
+        print(col)
         return col
 
     def generation(self):
@@ -690,9 +707,10 @@ class Dungeon:
                 else:
                     self.cor1 = [self.cor[0] - 1, self.cor[1]]
             if self.cor1[0] < 0:
-                self.cor1[0] = 1
+                self.cor1[0] = 2
             if self.cor1[1] > 20:
-                self.cor1[1] = 19
+                self.cor1[1] = 18
+            print(*self.map, sep='\n')
             if self.map[self.cor1[0] + 1][self.cor1[1]][0]:
                 col_sos += 1
             if self.map[self.cor1[0] - 1][self.cor1[1]][0]:
@@ -759,7 +777,7 @@ while floor != 6:
     z = 500
     transition = False
     x1, y1 = 9, 10
-    dog_surf = load_image('Sednev.jpg', -1)
+    dog_surf = load_image('Седнев.jpg', -1)
     board.render(screen, x, y)
     while True:
         for event in pygame.event.get():
@@ -825,6 +843,7 @@ while floor != 6:
                         invent = True
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
+        bonus_power = sum([i[1] for i in stuff])
         if hp <= 0:
             deth()
             floor = 0
@@ -838,7 +857,7 @@ while floor != 6:
             z = 500
             transition = False
             x1, y1 = 9, 10
-            dog_surf = load_image('Sednev.jpg', -1)
+            dog_surf = load_image('Седнев.jpg', -1)
             board.render(screen, x, y)
         if transition:
             floor += 1
