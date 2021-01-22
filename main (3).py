@@ -3,12 +3,13 @@ import sys
 import pygame
 import random
 
-stuff = []
+stuff = [["нож", 1]]
 ticket = 0
 weapons = [["нож", 1], ["кочерга", 1]]
 lvl = 1
 hp = 10
 hp1 = 10
+hill = 0  # зелья исцеления
 maxhp = 10
 maxhp1 = 10
 money = 0
@@ -140,10 +141,9 @@ def draw_room10(screen, coords):
 def ask_room(screen, coords, id_list):
     if len(map[id_list[0]][id_list[1]]) == 1:
         return
-    print(map[id_list[0]][id_list[1]])
     was = map[id_list[0]][id_list[1]][1]
     id = map[id_list[0]][id_list[1]][0]
-    print(id)
+    # id = 3
     if was:
         if id == 1:
             ask_room1(screen, coords, id_list)
@@ -184,23 +184,196 @@ def ask_room1(screen, coords, idcell):
 
 
 def ask_room2(screen, coords):
-    pass
+    global x
+    global y
+    global hp
+    global t
+    global t1
+    global map
+    global bonus_power
+    attack_power = 2
+    hp_monstor = 10
+    maxhp_monstor = 10
+    screen1 = pygame.display.set_mode(size)
+    dog_surf1 = load_image('monstor.png', -1)
+    fight = False
+    col = 10
+    close = True
+    while close:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_x:
+                    if fight:
+                        fight = False
+                        damage = col // (760 // hp_monstor)
+                        if damage > hp_monstor / 2:
+                            damage = hp_monstor / 2 - (damage - hp_monstor / 2)
+                        print(damage + bonus_power)
+                        hp_monstor -= damage * 2 + bonus_power
+                        if hp_monstor <= 0:
+                            close = False
+                        hp -= attack_power
+                        if hp <= 0:
+                            pass
+                            # сдесь экран смерти
+                        col = 10
+                    else:
+                        fight = True
+        screen.fill((0, 0, 0))
+        dog_rect1 = dog_surf1.get_rect(bottomright=(240, 180))
+        dog_rect = dog_surf.get_rect(bottomright=(770, 170))
+        screen1.blit(dog_surf1, dog_rect1)
+        screen1.blit(dog_surf, dog_rect)
+        if fight:
+            col = board.render_fight_1(screen, x, y, col, maxhp_monstor, hp_monstor)
+        else:
+            board.render_fight(screen, x, y, maxhp_monstor, hp_monstor)
+        pygame.display.flip()
+    screen.fill((0, 0, 0))
+    map[t][t1][0] = 12
+    board.render(screen, x, y)
+    bonus_power += 1
 
 
 def ask_room3(screen, coords, atribut):
-    global money
+    global money, x, y, hill
     # Продаём оружее
     atribut = map[atribut[0]][atribut[1]][1]
     if atribut == -1:
+        pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
+        pygame.draw.rect(screen, (150, 50, 255), (500, 350, 250, 50), 1)
+        pygame.draw.rect(screen, (150, 50, 255), (500, 400, 250, 50), 1)
         if len(stuff) >= 1:
-            renderText(screen, "Вы продали: " + stuff[-1][0] + " за 5 монет")
-            stuff.pop(-1)
-            money += 5
+            renderText(screen, "продать" + stuff[-1][0] + " за 5 монет", (500, 320), 30)
+        else:
+            renderText(screen, "-------------", (500, 320), 30)
+        renderText(screen, "купить зелье - 2 монеты", (500, 370), 30)
+        renderText(screen, "Досвидания", (500, 420), 30)
+        runRoom = True
+        while runRoom:
+
+            pygame.display.flip()
+            for uy in pygame.event.get():
+                if uy.type == pygame.QUIT:
+                    exit()
+                if uy.type == pygame.MOUSEMOTION:
+                    screen.fill((0, 0, 0))
+                    board.render(screen, x, y)
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+
+                        if len(stuff) >= 1:
+                            renderText(screen, "продать" + stuff[-1][0] + " за 5 монет", (500, 320), 30)
+                            pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
+                        else:
+                            renderText(screen, "-------------", (500, 320), 30)
+                            pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
+                    else:
+                        if len(stuff) >= 1:
+                            renderText(screen, "продать" + stuff[-1][0] + " за 5 монет", (500, 320), 30)
+                        else:
+                            renderText(screen, "-------------", (500, 320), 30)
+                        pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
+                    renderText(screen, "купить зелье - 2 монеты", (500, 370), 30)
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                        pygame.draw.rect(screen, (150, 50, 0), (500, 350, 250, 50), 1)
+                    else:
+                        pygame.draw.rect(screen, (150, 50, 255), (500, 350, 250, 50), 1)
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(400, 450):
+                        pygame.draw.rect(screen, (150, 50, 0), (500, 400, 250, 50), 1)
+                        renderText(screen, "Досвидания", (500, 420), 30)
+                    else:
+                        pygame.draw.rect(screen, (150, 50, 255), (500, 400, 250, 50), 1)
+                        renderText(screen, "Досвидания", (500, 420), 30)
+
+                if uy.type == pygame.MOUSEBUTTONDOWN:
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+                        if len(stuff) >= 1:
+                            renderText(screen, "Вы продали: " + stuff[-1][0] + " за 5 монет")
+                            stuff.pop(-1)
+                            money += 5
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                        if money >= 2:
+                            money -= 2
+                            hill += 1
+                            renderText(screen, "У нас лучшие зелья!")
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(400, 450):
+                        screen.fill((0, 0, 0))
+                        board.render(screen, x, y)
+                        runRoom = False
+                if uy.type == pygame.KEYDOWN:
+                    if uy.key == pygame.K_ESCAPE:
+                        screen.fill((0, 0, 0))
+                        board.render(screen, x, y)
+                        runRoom = False
+
     else:
+        pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
+        pygame.draw.rect(screen, (150, 50, 255), (500, 350, 250, 50), 1)
+        pygame.draw.rect(screen, (150, 50, 255), (500, 400, 250, 50), 1)
         if money >= 8:
-            money -= 8
-            stuff.append(random.choice[weapons])
-            renderText(screen, str("Вы купили: " + stuff[-1][0] + " за 8 монет"))
+            renderText(screen, "купить" + random.choice(weapons)[0] + " за 8 монет", (500, 320), 30)
+        else:
+            renderText(screen, "-------------", (500, 320), 30)
+        renderText(screen, "купить зелье - 2 монеты", (500, 370), 30)
+        renderText(screen, "Досвидания", (500, 420), 30)
+        runRoom = True
+        while runRoom:
+
+            pygame.display.flip()
+            for uy in pygame.event.get():
+                if uy.type == pygame.QUIT:
+                    exit()
+                if uy.type == pygame.MOUSEMOTION:
+                    screen.fill((0, 0, 0))
+                    board.render(screen, x, y)
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+
+                        if money >= 8:
+                            renderText(screen, "купить" + random.choice(weapons)[0] + " за 8 монет", (500, 320), 30)
+                            pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
+                        else:
+                            renderText(screen, "-------------", (500, 320), 30)
+                            pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
+                    else:
+                        if money >= 8:
+                            renderText(screen, "ку1пить" + random.choice(weapons)[0] + " за 8 монет", (500, 320), 30)
+                        else:
+                            renderText(screen, "-------------", (500, 320), 30)
+                        pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
+                    renderText(screen, "купить зелье - 2 монеты", (500, 370), 30)
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                        pygame.draw.rect(screen, (150, 50, 0), (500, 350, 250, 50), 1)
+                    else:
+                        pygame.draw.rect(screen, (150, 50, 255), (500, 350, 250, 50), 1)
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(400, 450):
+                        pygame.draw.rect(screen, (150, 50, 0), (500, 400, 250, 50), 1)
+                        renderText(screen, "Досвидания", (500, 420), 30)
+                    else:
+                        pygame.draw.rect(screen, (150, 50, 255), (500, 400, 250, 50), 1)
+                        renderText(screen, "Досвидания", (500, 420), 30)
+
+                if uy.type == pygame.MOUSEBUTTONDOWN:
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+                        if len(stuff) >= 1:
+                            renderText(screen, "Вы продали: " + stuff[-1][0] + " за 5 монет")
+                            stuff.pop(-1)
+                            money += 5
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                        if money >= 2:
+                            money -= 2
+                            hill += 1
+                            renderText(screen, "У нас лучшие зелья!")
+                    if uy.pos[0] in range(500, 750) and uy.pos[1] in range(400, 450):
+                        screen.fill((0, 0, 0))
+                        board.render(screen, x, y)
+                        runRoom = False
+                if uy.type == pygame.KEYDOWN:
+                    if uy.key == pygame.K_ESCAPE:
+                        screen.fill((0, 0, 0))
+                        board.render(screen, x, y)
+                        runRoom = False
 
 
 def ask_room4(screen, coords):
@@ -245,19 +418,24 @@ def ask_room6(screen, coords, id):
             map[id[0]][id[1]][1] = 0
 
 
-def renderText(screen, text, coords=False):
-    font = pygame.font.Font(None, 50)
-    line = font.render(text, True, pygame.Color("Blue"))
+def renderText(screen, text, coords=False, size1=False, color=(230, 220, 82)):
+    if size1:
+        font = pygame.font.Font(None, size1)
+    else:
+        font = pygame.font.Font(None, 50)
+    line = font.render(text, True, color)
     line_rect = line.get_rect()
     line_rect.top = size[1] / 2 - 100
     line_rect.left = size[0] / 2 - line_rect.width / 2
     if coords:
         line_rect.top = coords[1]
         line_rect.left = coords[0]
-        pygame.draw.rect(screen, (255, 0, 0), (*coords, line_rect.width + 20, line_rect.height + 10))
+        if not size1:
+            pygame.draw.rect(screen, (255, 0, 0), (*coords, line_rect.width + 20, line_rect.height + 10))
     else:
-        pygame.draw.rect(screen, (255, 0, 0),
-                         (line_rect.x - 10, line_rect.y, line_rect.width + 20, line_rect.height + 10))
+        fonText = pygame.transform.scale(load_image("TextFon.png", -1), (line_rect.width + 300, 100))
+        screen.blit(fonText, (line_rect.x - 150, line_rect.y - 30))
+        # pygame.draw.rect(screen, (255, 0, 0), (line_rect.x - 10, line_rect.y, line_rect.width + 20, line_rect.height + 10))
     screen.blit(line, line_rect)
 
 
@@ -364,7 +542,8 @@ def dethscreen(screen, size, position=False):
     h = startImage.get_height()
     screen.blit(startImage, (size[0] / 2 - w / 2, size[0] / 2 - h / 2 + 150))
 
-#sd
+
+# sd
 def deth():
     global maxhp, hp, stuff, ex
     ex = False
@@ -426,6 +605,7 @@ class Dungeon:
         self.colekt_room = {}
 
     def render(self, screen, x1, y1):
+        global money
         f1 = 0
         y = 0
         for j in range(20):
@@ -447,10 +627,48 @@ class Dungeon:
         image = pygame.transform.scale(load_image("door.png", -1), (150, 150))
         screen.blit(image, [self.colekt_room[self.id_exit][0] - x1, self.colekt_room[self.id_exit][1] - y1])
         self.map[self.colekt_room[self.id_exit][-1][0]][self.colekt_room[self.id_exit][-1][1]] = [32, 1]
-        y22 = 0
-        for i in stuff:
-            renderText(screen, i[0], (0, y22))
-            y22 += 50
+        y22 = 60
+        if invent:
+            screen.blit(pygame.transform.scale(load_image("inventory.png", -1), (200, 300)), (0, 0))
+            for i in stuff:
+                renderText(screen, i[0], (30, y22), 50, (0, 0, 0))
+                y22 += 30
+        else:
+            screen.blit(pygame.transform.scale(load_image("inventory.png", -1), (200, 300)), (0, -250))
+
+        renderText(screen, str(money), (400, 0))
+
+    def render_fight(self, screen, x1, y1, maxhp_monstor, hp_monstor):
+        pygame.draw.rect(screen, (255, 255, 255),
+                         (770, maxhp1, 15, maxhp * 10))
+        pygame.draw.rect(screen, (255, 0, 0),
+                         (770, hp1, 15, hp * 10))
+        pygame.draw.rect(screen, (255, 255, 255),
+                         (10, 10, 15, maxhp_monstor * 10))
+        pygame.draw.rect(screen, (255, 0, 0),
+                         (10, 10, 15, hp_monstor * 10))
+        font = pygame.font.Font(None, 50)
+        text = font.render('Нажмите X для боя.', True, (255, 0, 0))
+        place = text.get_rect(center=(200, 600))
+        screen.blit(text, place)
+
+    def render_fight_1(self, screen, x1, y1, col, maxhp_monstor, hp_monstor):
+        pygame.draw.rect(screen, (255, 255, 255),
+                         (770, maxhp1, 15, maxhp * 10))
+        pygame.draw.rect(screen, (255, 0, 0),
+                         (770, hp1, 15, hp * 10))
+        pygame.draw.rect(screen, (255, 255, 255),
+                         (10, 10, 15, maxhp_monstor * 10))
+        pygame.draw.rect(screen, (255, 0, 0),
+                         (10, 10, 15, hp_monstor * 10))
+        pygame.draw.rect(screen, (255, 255, 255),
+                         (10, 600, 775, 75), 8)
+        pygame.draw.rect(screen, (255, 0, 0),
+                         (385, 600, 15, 75), 0)
+        pygame.draw.rect(screen, (0, 255, 0),
+                         (col, 600, 15, 75), 0)
+        col += 0.2
+        return col
 
     def generation(self):
         global karta
@@ -503,9 +721,11 @@ class Dungeon:
 
 
 pygame.init()
+bonus_power = 0
 size = 800, 700
 screen = pygame.display.set_mode((size))
 floor = 1
+invent = False  # открыт или закрыт инвентарь
 start(screen, size)
 ex = False
 click = pygame.mixer.Sound("data/click.mp3")
@@ -590,10 +810,21 @@ while floor != 6:
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
                     ask_room(screen, (600, 600), (x1, y1))
+                elif map[x1][y1][0] == 2:
+                    ask_room(screen, (600, 600), (x1, y1))
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
                     exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                print(invent)
+                if event.pos[0] in range(0, 200) and event.pos[1] in range(0, 50):
+                    if invent:
+                        invent = False
+                    else:
+                        invent = True
+                    screen.fill((0, 0, 0))
+                    board.render(screen, x, y)
         if hp <= 0:
             deth()
             floor = 0
