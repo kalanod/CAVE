@@ -101,8 +101,9 @@ def draw_room5(screen, coords):
 
 def draw_room6(screen, coords, id):
     # комната с подозрительным торгашом
-    if map[id[0]][id[1]][1] != False:
-        map[id[0]][id[1]][1] = random.randint(1, 2)
+    if map[id[0]][id[1]][1] == 1:
+        map[id[0]][id[1]][1] = random.randint(-2, -1)
+
     if map[id[0]][id[1]][1]:
         image = pygame.transform.scale(load_image("person.png", -1), (100, 100))
     else:
@@ -173,17 +174,18 @@ def ask_room(screen, coords, id_list):
 
 def ask_room1(screen, coords, idcell):
     drop = random.choice(weapons)
-    stuff.append(drop)
-    font = pygame.font.Font(None, 50)
-    line = font.render(str("Вы получили: " + drop[0]), True, pygame.Color("Blue"))
-    line_rect = line.get_rect()
-    line_rect.top = size[1] / 2 - 100
-    line_rect.left = size[0] / 2 - line_rect.width / 2
-    screen.blit(line, line_rect)
-    map[idcell[0]][idcell[1]][1] = 0
+    if len(stuff) <= 5:
+        stuff.append(drop)
+        renderText(screen, str("Вы получили: " + drop[0]))
+        map[idcell[0]][idcell[1]][1] = 0
+    else:
+        renderText(screen, str("у вас больше нет места!"))
 
 
 def ask_room2(screen, coords):
+    mainTheme.stop()
+    battleTheme.set_volume(0.1)
+    battleTheme.play()
     global x
     global y
     global hp
@@ -247,7 +249,9 @@ def ask_room2(screen, coords):
     screen.fill((0, 0, 0))
     map[t][t1][0] = 12
     board.render(screen, x, y)
-    bonus_power += 1
+
+    battleTheme.stop()
+    mainTheme.play(loops=True)
 
 
 def ask_room3(screen, coords, atribut):
@@ -417,18 +421,75 @@ def ask_room5(screen, coords, id):
 def ask_room6(screen, coords, id):
     global hp
     # подозрительный
-    if map[id[0]][id[1]][1] == 1:
-        hp -= 4
-        stuff.append(random.choice(weapons))
-        renderText(screen, str(stuff[-1][0] + " Впился вам в бок забрав 4 хп,"))
-        renderText(screen, "но силуэт исчез, и похоже, теперь оружее ваше", (40, 300))
-        map[id[0]][id[1]][1] = 0
-    if map[id[0]][id[1]][1] == 2:
-        if len(stuff) >= 1:
-            renderText(screen, str("Ваш " + stuff[-1][0] + " был украден"))
-            stuff.pop(-1)
-            hp = maxhp
-            map[id[0]][id[1]][1] = 0
+    global money, x, y, hill
+    pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
+    pygame.draw.rect(screen, (150, 50, 255), (500, 350, 250, 50), 1)
+    if map[id[0]][id[1]][1] == -1:
+        renderText(screen, "что ты причешь?", (500, 320), 30)
+    elif map[id[0]][id[1]][1] == -2:
+        renderText(screen, "это аптечка?", (500, 320), 30)
+    renderText(screen, "... бывай", (500, 370), 30)
+    runRoom = True
+    while runRoom:
+        pygame.display.flip()
+        for uy in pygame.event.get():
+            if uy.type == pygame.QUIT:
+                exit()
+            if uy.type == pygame.MOUSEMOTION:
+                screen.fill((0, 0, 0))
+                board.render(screen, x, y)
+                print(map[id[0]][id[1]][1])
+                if map[id[0]][id[1]][1] == -1:
+                    renderText(screen, "что ты причешь?", (500, 320), 30)
+                elif map[id[0]][id[1]][1] == -2:
+                    renderText(screen, "это аптечка?", (500, 320), 30)
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+                    pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
+
+                renderText(screen, "... бывай", (500, 370), 30)
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                    pygame.draw.rect(screen, (150, 50, 255), (500, 350, 250, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (500, 350, 250, 50), 1)
+
+            if uy.type == pygame.MOUSEBUTTONDOWN:
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+                    if map[id[0]][id[1]][1] == -2:
+                        if len(stuff) >= 1:
+                            renderText(screen, str("Ваш " + stuff[-1][0] + " был украден!"))
+                            stuff.pop(-1)
+                            hp = maxhp
+                            map[id[0]][id[1]][1] = 0
+                            screen.fill((0, 0, 0))
+                            board.render(screen, x, y)
+                            runRoom = False
+                            return
+                    if map[id[0]][id[1]][1] == -1:
+                        hp -= 4
+                        stuff.append(random.choice(weapons))
+                        renderText(screen, str(stuff[-1][0] + " Впился вам в бок забрав 4 хп,"))
+                        renderText(screen, "но силуэт исчез, и похоже, теперь оружее ваше", (40, 300))
+                        map[id[0]][id[1]][1] = 0
+                        screen.fill((0, 0, 0))
+                        board.render(screen, x, y)
+                        runRoom = False
+                        return
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                    screen.fill((0, 0, 0))
+                    board.render(screen, x, y)
+                    runRoom = False
+                    return
+                # if uy.pos[0] in range(500, 750) and uy.pos[1] in range(400, 450):
+                #    screen.fill((0, 0, 0))
+                #   board.render(screen, x, y)
+                #   runRoom = False
+            if uy.type == pygame.KEYDOWN:
+                if uy.key == pygame.K_ESCAPE:
+                    screen.fill((0, 0, 0))
+                    board.render(screen, x, y)
+                    runRoom = False
 
 
 def renderText(screen, text, coords=False, size1=False, color=(230, 220, 82)):
@@ -501,7 +562,7 @@ def ask_room11(screen):
 
 def start(screen, size, position=False):
     global focus
-    startImage = pygame.transform.scale(load_image("start.png"), (800, 700))
+    startImage = pygame.transform.scale(load_image("ss.gif"), (800, 700))
     screen.blit(startImage, (0, 0))
     startImage = pygame.transform.scale(load_image("logo.png", -1), (400, 300))
     w = startImage.get_width()
@@ -637,7 +698,7 @@ class Dungeon:
                          (770, maxhp1, 15, maxhp * 10))
         pygame.draw.rect(screen, (255, 0, 0),
                          (770, hp1, 15, hp * 10))
-        image = pygame.transform.scale(load_image("door.png", -1), (150, 150))
+        image = pygame.transform.scale(load_image("door.png", -1), (100, 100))
         screen.blit(image, [self.colekt_room[self.id_exit][0] - x1, self.colekt_room[self.id_exit][1] - y1])
         self.map[self.colekt_room[self.id_exit][-1][0]][self.colekt_room[self.id_exit][-1][1]] = [32, 1]
         y22 = 60
@@ -648,8 +709,8 @@ class Dungeon:
                 y22 += 30
         else:
             screen.blit(pygame.transform.scale(load_image("inventory.png", -1), (200, 300)), (0, -250))
-
-        renderText(screen, str(money), (400, 0))
+        screen.blit(pygame.transform.scale(load_image("money.png", -1), (120, 100)), (200, 0))
+        renderText(screen, str(money), (250, 40), 40)
 
     def render_fight(self, screen, x1, y1, maxhp_monstor, hp_monstor):
         pygame.draw.rect(screen, (255, 255, 255),
@@ -748,8 +809,8 @@ start(screen, size)
 ex = False
 click = pygame.mixer.Sound("data/click.mp3")
 tap = pygame.mixer.Sound("data/tap.mp3")
-pygame.mixer.music.load("data/enchantment.ogg")
-pygame.mixer.music.play(loops=600)
+mainTheme = pygame.mixer.Sound("data/enchantment.ogg")
+battleTheme = pygame.mixer.Sound("data\RudeBuster.mp3")
 while True:
     pygame.display.flip()
     for i in pygame.event.get():
@@ -765,8 +826,8 @@ while True:
             print("DASDA")
     if ex:
         break
-
-while floor != 6:
+mainTheme.play(loops=True)
+while floor != 60:
     board = Dungeon(20, 20)
     karta = pygame.display.set_mode((size))
     x = 1475
