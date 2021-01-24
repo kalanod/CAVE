@@ -1,30 +1,22 @@
 import os
-import random
 import sys
 
 import pygame
 
 pygame.init()
-size = 600, 600
+size = width, height = 600, 300
+
 screen = pygame.display.set_mode(size)
+screen.fill((0, 0, 221))
 run = True
+clock = pygame.time.Clock()
+FPS = 50
 
-# COPY here
-map = [[1, 1, ], [2, 1], [3, 1],
-       [4, 1], [5, 12], [6, 1],
-       [7, False], [False, False], [False, False],
-       [False, False]]
 
-stuff = []
-ticket = 0
-weapons = [["нож", 1], ["кочерга", 1]]
-lvl = 1
-hp = 10
-maxhp = 10
-money = 0
-seeds = {"солнечник": 0,
-         "ведьмин стебель": 0,
-         "хрустальник": 0}
+def terminate():
+    pygame.quit()
+    sys.exit()
+
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -43,276 +35,147 @@ def load_image(name, colorkey=None):
     return image
 
 
-def find_room(screen, coords, id_list):
-    id = map[id_list][0]
-    if id == 1:
-        draw_room1(screen, coords)
-    elif id == 2:
-        draw_room2(screen, coords)
-    elif id == 3:
-        draw_room3(screen, coords)
-    elif id == 4:
-        draw_room4(screen, coords)
-    elif id == 5:
-        draw_room5(screen, coords)
-    elif id == 6:
-        draw_room6(screen, coords)
-    elif id == 7:
-        draw_room7(screen, coords)
-    elif id == 8:
-        draw_room8(screen, coords)
-    elif id == 9:
-        draw_room2(screen, coords)
-    elif id == 10:
-        draw_room2(screen, coords)
+def load_level(filename):
+    filename = "data/" + filename
+    # читаем уровень, убирая символы перевода строки
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+
+    # и подсчитываем максимальную длину
+    max_width = max(map(len, level_map))
+
+    # дополняем каждую строку пустыми клетками ('.')
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-def draw_room1(screen, coords):
-    # комната с сундуком
-    image = pygame.transform.scale(load_image("chest.png", -1), (100, 100))
-    screen.blit(image, coords)
+tile_images = {
+    'wall': load_image('box.png'),
+    'empty': load_image('grass.png')
+}
+player_image = load_image('mario.png')
+
+tile_width = tile_height = 50
 
 
-def draw_room2(screen, coords):
-    # комната с сундуком
-    image = pygame.transform.scale(load_image("monstor.png", -1), (100, 100))
-    screen.blit(image, coords)
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(tiles_group, all_sprites)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
 
 
-def draw_room3(screen, coords, id_cell):
-    # комната с сундуком
-    rand = random.randint(0, 2)
-    map[id_cell][1] = rand
-    image = pygame.transform.scale(load_image("shop.png", -1), (100, 100))
-    screen.blit(image, coords)
+class Player(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(player_group, all_sprites)
+        self.image = player_image
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x + 15, tile_height * pos_y + 5)
+    def ml(self):
+        self.rect.x -= 55
+    def mr(self):
+        self.rect.x += 55
+    def md(self):
+        self.rect.y += 55
+    def mu(self):
+        self.rect.y -= 55
 
 
-def draw_room4(screen, coords):
-    # комната с
-    image = pygame.transform.scale(load_image("PushkiPushka.png", -1), (100, 100))
-    screen.blit(image, coords)
+# основной персонаж
+player = None
+
+# группы спрайтов
+all_sprites = pygame.sprite.Group()
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
 
 
-def draw_room5(screen, coords):
-    # ПОТОП!
-    image = pygame.transform.scale(load_image("boat.png", -1), (100, 100))
-    screen.blit(image, coords)
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '.':
+                Tile('empty', x, y)
+            elif level[y][x] == '#':
+                Tile('wall', x, y)
+            elif level[y][x] == '@':
+                Tile('empty', x, y)
+                new_player = Player(x, y)
+    # вернем игрока, а также размер поля в клетках
+    return new_player, x, y
 
 
-def draw_room6(screen, coords):
-    # комната с подозрительным торгашом
-    image = pygame.transform.scale(load_image("person.png", -1), (100, 100))
-    screen.blit(image, coords)
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
 
 
-def draw_room7(screen, coords):
-    # комната с запахом благовоний
-    image = pygame.transform.scale(load_image("meditation.png", -1), (100, 100))
-    screen.blit(image, coords)
+def start_screen():
+    intro_text = ["ЗАСТАВКА", "",
+                  "Правила игры",
+                  "Если в правилах несколько строк,",
+                  "приходится выводить их построчно"]
 
+    fon = pygame.transform.scale(load_image('fon.png'), size)
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
 
-def draw_room8(screen, coords):
-    # богач или трупач
-    image = pygame.transform.scale(load_image("show.png", -1), (100, 100))
-    screen.blit(image, coords)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру
+        pygame.display.flip()
+        clock.tick(FPS)
 
-
-def draw_room9(screen, coords):
-    # келья
-    image = pygame.transform.scale(load_image("cells.png", -1), (100, 100))
-    screen.blit(image, coords)
-
-
-def draw_room10(screen, coords):
-    # щель и таракан
-    image = pygame.transform.scale(load_image("cockroach.png", -1), (100, 100))
-    screen.blit(image, coords)
-
-
-def ask_room(screen, coords, idcell):
-    was = map[idcell][1]
-    id = map[idcell][0]
-    if was:
-        if id == 1:
-            ask_room1(screen, coords, idcell)
-        elif id == 2:
-            ask_room2(screen, coords)
-        elif id == 3:
-            ask_room3(screen, coords, idcell)
-        elif id == 4:
-            ask_room4(screen, coords)
-        elif id == 5:
-            ask_room5(screen, coords, idcell)
-        elif id == 6:
-            ask_room6(screen, coords)
-        elif id == 7:
-            ask_room7(screen, coords, idcell)
-        elif id == 8:
-            ask_room8(screen, coords, idcell)
-        elif id == 9:
-            ask_room9(screen, coords, idcell)
-        elif id == 10:
-            ask_room10(screen, coords)
-        elif id == 11:
-            ask_room11(screen)
-
-
-def ask_room1(screen, coords, idcell):
-    drop = random.choice(weapons)
-    stuff.append(drop)
-    font = pygame.font.Font(None, 50)
-    line = font.render(str("Вы получили: " + drop[0]), True, pygame.Color("Blue"))
-    line_rect = line.get_rect()
-    line_rect.top = size[1] / 2 - 100
-    line_rect.left = size[0] / 2 - line_rect.width / 2
-    pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
-    screen.blit(line, line_rect)
-    map[idcell][1] = False
-
-
-def ask_room2(screen, coords):
-    pass
-
-
-def ask_room3(screen, coords, atribut):
-    global money
-    # Продаём оружее
-    if len(stuff) >= 1:
-        font = pygame.font.Font(None, 50)
-        line = font.render(str("Вы продали: " + stuff[-1] + " за 5 монет"), True, pygame.Color("Blue"))
-        line_rect = line.get_rect()
-        line_rect.top = size[1] / 2 - 100
-        line_rect.left = size[0] / 2 - line_rect.width / 2
-        pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
-        screen.blit(line, line_rect)
-        stuff.pop(-1)
-        money += 5
-
-
-def ask_room4(screen, coords):
-    global money
-    # Покупаем оружее
-
-    if money >= 8:
-        money -= 8
-        stuff.append(random.choice[weapons])
-        font = pygame.font.Font(None, 50)
-        line = font.render(str("Вы купили: " + stuff[-1] + " за 8 монет"), True, pygame.Color("Blue"))
-        line_rect = line.get_rect()
-        line_rect.top = size[1] / 2 - 100
-        line_rect.left = size[0] / 2 - line_rect.width / 2
-        pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
-        screen.blit(line, line_rect)
-
-
-def ask_room5(screen, coords, id):
-    global maxhp, lvl
-    # благовония
-    if map[id][1] == 0:
-        map[id][1] = False
-    else:
-        rand = random.randint(0, 5)
-        map[id][1] -= 1
-
-        font = pygame.font.Font(None, 50)
-        if rand == 0:
-            line = font.render(str("Вы потянули лодышку -1 ур "), True, pygame.Color("Blue"))
-            lvl -= 1
-        else:
-            maxhp += 1
-            line = font.render(str("Ваш максимальный хп теперь " + str(maxhp)), True, pygame.Color("Blue"))
-        line_rect = line.get_rect()
-        line_rect.top = size[1] / 2 - 100
-        line_rect.left = size[0] / 2 - line_rect.width / 2
-        pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
-        screen.blit(line, line_rect)
-
-
-def ask_room6(screen, coords):
-    global money, ticket
-    if money >= 1:
-        money -= 1
-        ticket -= 1
-        font = pygame.font.Font(None, 50)
-        line = font.render(str("Спасибо! куда плывём?"), True, pygame.Color("Blue"))
-        line_rect = line.get_rect()
-        line_rect.top = size[1] / 2 - 100
-        line_rect.left = size[0] / 2 - line_rect.width / 2
-        pygame.draw.rect(screen, (255, 0, 0), (*coords, 150, 30))
-        screen.blit(line, line_rect)
-
-
-def renderText(screen, text):
-    font = pygame.font.Font(None, 50)
-    line = font.render(text, True, pygame.Color("Blue"))
-    line_rect = line.get_rect()
-    line_rect.top = size[1] / 2 - 100
-    line_rect.left = size[0] / 2 - line_rect.width / 2
-    pygame.draw.rect(screen, (255, 0, 0), (300, 300, 150, 30))
-    screen.blit(line, line_rect)
-
-
-def ask_room7(screen, coords, id):
-    global hp
-    # подозрительный
-    if map[id][1] == 1:
-        hp -= 4
-        stuff.append(random.choice(weapons))
-        renderText(screen, str(stuff[-1] + "Впился вам в бок забрав 4 хп, но силуэт исчез, и похоже, теперь он ваш"))
-    if map[id][1] == 2:
-        if len(stuff) >= 1:
-            renderText(screen, str(stuff[-1] + "Ваш " + stuff[-1] + " был украден"))
-            stuff.pop(-1)
-            hp = maxhp
-
-
-def ask_room8(screen, coords, id):
-    global hp, maxhp
-    rand = random.randint(0, 5)
-    if rand == 0:
-        renderText(screen, "Ты истинное пораждение тьмы! я помогу тебе")
-        maxhp += 2
-    else:
-        renderText(screen, "Вас пронзила тысяча теневых клинков")
-        hp -= 4
-
-
-def ask_room9(screen, coords, id):
-    global hp, money
-    rand = random.randint(0, 5)
-    if rand < 2:
-        money += 1
-        renderText(screen, "Это не зелье это монета!")
-    elif rand < 5:
-        hp -= 2
-        renderText(screen, "Горько! это было зелье вреда!")
-    elif rand == 5:
-        hp -= 5
-        renderText(screen, "Горько! это было большое зелье вреда!")
-    map[id][1] = False
-
-
-def ask_room10(screen, coords):
-    pygame.draw.rect(screen, (255, 0, 0), coords, 50, 10)
-
-def ask_room11(screen):
-    renderText(screen, "Получено семечно солнечнико")
-    seeds["солнечник"] += 1
-
-
-j = 0
-d = 0
-for i in range(1, 6):
-    d += 1
-    if i % 5 == 0:
-        j += 1
-        d = 0
-    find_room(screen, (100 * d, 100 * j), i)
-ask_room(screen, (50 * 1, 50 * 1), 3)
-
-pygame.display.flip()
+camera = Camera()
+start_screen()
+player, level_x, level_y = generate_level(load_level('map.txt'))
 while run:
     for i in pygame.event.get():
         if i.type == pygame.QUIT:
             run = False
+        if i.type == pygame.KEYDOWN:
+            if i.key == pygame.K_LEFT:
+                player.ml()
+            elif i.key == pygame.K_RIGHT:
+                player.mr()
+            elif i.key == pygame.K_DOWN:
+                player.md()
+            elif i.key == pygame.K_UP:
+                player.mu()
+
+    screen.fill((255, 255, 255))
+    all_sprites.update()
+    all_sprites.draw(screen)
+    pygame.display.flip()
+    # изменяем ракурс камеры
+    camera.update(player);
+    # обновляем положение всех спрайтов
+    for sprite in all_sprites:
+        camera.apply(sprite)
+    clock.tick(50)
 pygame.quit()

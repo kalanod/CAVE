@@ -35,12 +35,64 @@ def load_image(name, colorkey=None):
         image = image.convert_alpha()
     return image
 
+def draw_floor(screen, coords, id_list):
+    if len(map[id_list[0]][id_list[1]]) == 1:
+        return
+    up, down, left, right = False, False, False, False
+    if len(map[id_list[0]][id_list[1] + 1]) > 1:
+        down = True
+    if len(map[id_list[0] - 1][id_list[1]]) > 1:
+        left = True
+    if len(map[id_list[0] + 1][id_list[1]]) > 1:
+        right = True
+    if len(map[id_list[0]][id_list[1] - 1]) > 1:
+        up = True
+    if up:
+        if down:
+            if right:
+                if left:
+                    screen.blit(floorImage[8], coords)
+                else:
+                    screen.blit(floorImage[0], coords)
+            elif left:
+                screen.blit(floorImage[1], coords)
+            else:
+                screen.blit(floorImage[3], coords)
+        elif right:
+            if left:
+                screen.blit(floorImage[6], coords)
+            else:
+                screen.blit(floorImage[14], coords)
+        elif left:
+            screen.blit(floorImage[5], coords)
+        else:
+            screen.blit(floorImage[13], coords)
+
+    elif down:
+        if right:
+            if left:
+                screen.blit(floorImage[2], coords)
+            else:
+                screen.blit(floorImage[7], coords)
+        elif left:
+            screen.blit(floorImage[4], coords)
+        else:
+            screen.blit(floorImage[10], coords)
+    elif left:
+        if right:
+            screen.blit(floorImage[12], coords)
+        else:
+            screen.blit(floorImage[15], coords)
+    else:
+        screen.blit(floorImage[11], coords)
 
 def find_room(screen, coords, id_list):
     if len(map[id_list[0]][id_list[1]]) == 1:
         return
+    draw_floor(screen, coords, id_list)
+
     id = map[id_list[0]][id_list[1]][0]
-    coords = (coords[0] + 50, coords[1] + 10)
+    coords = (coords[0] + 50, coords[1] + 50)
     if id == 1:
         draw_room1(screen, coords, id_list)
     elif id == 2:
@@ -438,7 +490,7 @@ def ask_room6(screen, coords, id):
             if uy.type == pygame.MOUSEMOTION:
                 screen.fill((0, 0, 0))
                 board.render(screen, x, y)
-                print(map[id[0]][id[1]][1])
+
                 if map[id[0]][id[1]][1] == -1:
                     renderText(screen, "что ты причешь?", (500, 320), 30)
                 elif map[id[0]][id[1]][1] == -2:
@@ -462,20 +514,12 @@ def ask_room6(screen, coords, id):
                             stuff.pop(-1)
                             hp = maxhp
                             map[id[0]][id[1]][1] = 0
-                            screen.fill((0, 0, 0))
-                            board.render(screen, x, y)
-                            runRoom = False
-                            return
                     if map[id[0]][id[1]][1] == -1:
                         hp -= 4
                         stuff.append(random.choice(weapons))
                         renderText(screen, str(stuff[-1][0] + " Впился вам в бок забрав 4 хп,"))
                         renderText(screen, "но силуэт исчез, и похоже, теперь оружее ваше", (40, 300))
                         map[id[0]][id[1]][1] = 0
-                        screen.fill((0, 0, 0))
-                        board.render(screen, x, y)
-                        runRoom = False
-                        return
                 if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
@@ -635,7 +679,7 @@ def deth():
                 if position[0] in range(300, 500) and \
                         position[1] in range(470, 600):
                     ex = True
-                print("DASDA")
+
         if ex:
             break
     maxhp = 10
@@ -644,6 +688,7 @@ def deth():
 
 
 def ask_room12(screen):
+    timer = pygame.time.Clock
     global transition
     transition = True
 
@@ -711,7 +756,8 @@ class Dungeon:
             screen.blit(pygame.transform.scale(load_image("inventory.png", -1), (200, 300)), (0, -250))
         screen.blit(pygame.transform.scale(load_image("money.png", -1), (120, 100)), (200, 0))
         renderText(screen, str(money), (250, 40), 40)
-
+        screen.blit(pygame.transform.scale(load_image("hill.png", -1), (100, 100)), (300, 0))
+        renderText(screen, str(hill), (340, 40), 40)
     def render_fight(self, screen, x1, y1, maxhp_monstor, hp_monstor):
         pygame.draw.rect(screen, (255, 255, 255),
                          (770, maxhp1, 15, maxhp * 10))
@@ -745,7 +791,7 @@ class Dungeon:
             col -= 2
         else:
             col += 2
-        print(col)
+
         return col
 
     def generation(self):
@@ -771,7 +817,10 @@ class Dungeon:
                 self.cor1[0] = 2
             if self.cor1[1] > 20:
                 self.cor1[1] = 18
-            print(*self.map, sep='\n')
+            for ig in map:
+                for ad in ig:
+                    print("*"if ad[0] else ".", end="")
+                print()
             if self.map[self.cor1[0] + 1][self.cor1[1]][0]:
                 col_sos += 1
             if self.map[self.cor1[0] - 1][self.cor1[1]][0]:
@@ -811,6 +860,8 @@ click = pygame.mixer.Sound("data/click.mp3")
 tap = pygame.mixer.Sound("data/tap.mp3")
 mainTheme = pygame.mixer.Sound("data/enchantment.ogg")
 battleTheme = pygame.mixer.Sound("data\RudeBuster.mp3")
+hallo = pygame.mixer.Sound("data\hallo.mp3")
+hallo.play(loops=600)
 while True:
     pygame.display.flip()
     for i in pygame.event.get():
@@ -826,7 +877,24 @@ while True:
             print("DASDA")
     if ex:
         break
-mainTheme.play(loops=True)
+mainTheme.play(loops=600)
+im = pygame.transform.scale(load_image('heroImage.png', -1), (250, 100))
+heroImage = []
+floorImage = []
+for i in range(4):
+    rect = pygame.Rect(0, 0,  im.get_width() // 4,
+                            im.get_height())
+    frame_location = (rect.w * i, 0)
+    heroImage.append(im.subsurface(pygame.Rect(frame_location, rect.size)))
+dog_surf = heroImage[0]
+im = pygame.transform.scale(load_image('flor.png', -1), (800, 800))
+for i in range(4):
+    for j in range(4):
+        rect = pygame.Rect(0, 0, im.get_width() // 4,
+                           im.get_height() // 4)
+        frame_location = (rect.w * j, rect.h * i)
+        floorImage.append(im.subsurface(pygame.Rect(frame_location, rect.size)))
+hallo.stop()
 while floor != 60:
     board = Dungeon(20, 20)
     karta = pygame.display.set_mode((size))
@@ -838,7 +906,7 @@ while floor != 60:
     z = 500
     transition = False
     x1, y1 = 9, 10
-    dog_surf = load_image('Седнев.jpg', -1)
+
     board.render(screen, x, y)
     while True:
         for event in pygame.event.get():
@@ -846,6 +914,7 @@ while floor != 60:
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
+                    dog_surf = heroImage[3]
                     t1 -= 1
                     tap.play()
                     if board.map[t][t1][0]:
@@ -855,7 +924,9 @@ while floor != 60:
                         t1 += 1
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
+
                 if event.key == pygame.K_DOWN:
+                    dog_surf = heroImage[1]
                     tap.play()
                     t1 += 1
                     if board.map[t][t1][0]:
@@ -866,6 +937,7 @@ while floor != 60:
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
                 if event.key == pygame.K_LEFT:
+                    dog_surf = heroImage[2]
                     tap.play()
                     t -= 1
                     if board.map[t][t1][0]:
@@ -876,6 +948,7 @@ while floor != 60:
                     screen.fill((0, 0, 0))
                     board.render(screen, x, y)
                 if event.key == pygame.K_RIGHT:
+                    dog_surf = heroImage[0]
                     tap.play()
                     t += 1
                     if board.map[t][t1][0]:
@@ -895,6 +968,10 @@ while floor != 60:
                     pygame.quit()
                     sys.exit()
                     exit()
+                if event.key == pygame.K_q:
+                    if hill >= 1:
+                        hill -= 1
+                        hp += 3
             if event.type == pygame.MOUSEBUTTONDOWN:
                 print(invent)
                 if event.pos[0] in range(0, 200) and event.pos[1] in range(0, 50):
