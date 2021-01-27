@@ -3,11 +3,11 @@ import sys
 import pygame
 import random
 
-stuff = [["нож", 1]]
+stuff = [["кочерга", 1]]
 ticket = 0
-weapons = [["СТАРЫЙ ШАРФ", 1], ["кочерга", 1], ["ИГРУШЕЧНЫЙ НОЖ", 1], ["МОЛОТОК", 1],
-           ["ТРАМБОН", 2], ["ПОРЕБРИК", 2], ["ФЕН", 2],
-           ["ШПАГА", 3], ["СКВЕРНЫЙ БЛАСТЕР", 3]]
+weapons = [["старый шарф", 1], ["кочерга", 1], ["игрушечный нож", 1], ["молоток", 1],
+           ["трамбон", 2], ["поребрик", 2], ["фен", 2],
+           ["шпага", 3], ["скверный бластер", 3]]
 artefact = [["БАТИНКИ ОСЛЕПИТЕЛЬНОЙ СКОРОСТИ"], ["СТАРЫЙ ШАРФ"], ["СОЛОМЕННАЯ ШЛЯПА"]]
 lvl = 1
 hp = 10
@@ -118,8 +118,12 @@ def find_room(screen, coords, id_list):
         draw_room9(screen, coords, id_list)
     elif id == 10:
         draw_room10(screen, coords)
+    elif id == 11:
+        draw_room11(screen, coords, id_list)
     elif id == 13:
         draw_room13(screen, coords)
+    elif id == 14:
+        draw_room14(screen, coords)
 
 
 def draw_room1(screen, coords, id):
@@ -135,9 +139,9 @@ def draw_room2(screen, coords, id):
     # комната с сундуком
     print(map[id[0]][id[1]][1])
     if map[id[0]][id[1]][1] == 1:
-        monstor = int(random.randint(0, len(monsters)) - 1) * -1
+        monstor = int(random.randint(1, len(monsters))) * -1
         map[id[0]][id[1]][1] = monstor
-    image = monsters[abs(map[id[0]][id[1]][1])]
+    image = monsters[abs(map[id[0]][id[1]][1]) - 1]
     screen.blit(image, coords)
 
 
@@ -207,13 +211,32 @@ def draw_room13(screen, coords):
     screen.blit(image, (coords[0] + 20, coords[1] + 20))
 
 
+def draw_room14(screen, coords):
+    image = pygame.transform.scale(load_image("alhimiy.png", -1), (100, 100))
+    screen.blit(image, (coords[0] + 20, coords[1] + 20))
+
+
+def draw_room11(screen, coords, id):
+    if map[id[0]][id[1]][1] == 1:
+        map[id[0]][id[1]][1] = random.randint(-3, -1)
+    if map[id[0]][id[1]][1] == -1:
+        image = pygame.transform.scale(load_image("s1.png", -1), (30, 30))
+        screen.blit(image, (coords[0] + 20, coords[1] + 20))
+    elif map[id[0]][id[1]][1] == -2:
+        image = pygame.transform.scale(load_image("s2.png", -1), (30, 30))
+        screen.blit(image, (coords[0] + 20, coords[1] + 20))
+    elif map[id[0]][id[1]][1] == -3:
+        image = pygame.transform.scale(load_image("s3.png", -1), (30, 30))
+        screen.blit(image, (coords[0] + 20, coords[1] + 20))
+
+
 def ask_room(screen, coords, id_list):
     if len(map[id_list[0]][id_list[1]]) == 1:
         return
     was = map[id_list[0]][id_list[1]][1]
     id = map[id_list[0]][id_list[1]][0]
     # id = 3
-    if was:
+    if was and was != -20:
         if id == 1:
             ask_room1(screen, coords, id_list)
         elif id == 2:
@@ -235,16 +258,18 @@ def ask_room(screen, coords, id_list):
         elif id == 10:
             ask_room10(screen, coords)
         elif id == 11:
-            ask_room11(screen)
+            ask_room11(screen, id_list)
         elif id == 32:
             ask_room12(screen)
         elif id == 13:
             ask_room13(screen)
+        elif id == 14:
+            ask_room14(screen)
 
 
 def ask_room1(screen, coords, idcell):
     global money, hill
-    drop = random.randint(0, 5)
+    drop = random.randint(0, 6)
     if drop < 2:
         renderText(screen, str("Монетка! теперь твоя"))
         money += 1
@@ -253,7 +278,7 @@ def ask_room1(screen, coords, idcell):
         hill += 1
         renderText(screen, str("Красное зелье, пригодится!"))
         map[idcell[0]][idcell[1]][1] = 0
-    else:
+    elif drop == 5:
         drop = random.choice(weapons)
         if len(stuff) <= 5 and len(stuff) <= lvl // 10 + 1:
             stuff.append(drop)
@@ -261,13 +286,16 @@ def ask_room1(screen, coords, idcell):
             map[idcell[0]][idcell[1]][1] = 0
         else:
             renderText(screen, str("у вас нет места!"))
+    else:
+        renderText(screen, str("О нет! это мимик!"))
+        mimic(screen)
 
 
-def ask_room2(screen, id, hp_monstor=10, attack_power=False):
+def ask_room2(screen, id, hp_monstor=10, attack_power=False, pobag=True):
     mainTheme.stop()
     if not attack_power:
         attack_power = (abs(map[id[0]][id[1]][1]) // 2) + 2
-    dog_surf1 = monsters[abs(map[id[0]][id[1]][1])]
+    dog_surf1 = monsters[abs(map[id[0]][id[1]][1]) - 1]
     battleTheme.set_volume(0.1)
     battleTheme.play()
     global x, money, lvl, hill
@@ -287,12 +315,42 @@ def ask_room2(screen, id, hp_monstor=10, attack_power=False):
     col = 10
     close = True
     damage = 0
+    v = False
+    if pobag:
+        pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+        renderText(screen, "Побег", (570, 615), 30)
+    pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+    renderText(screen, "Бой", (170, 615), 30)
+    pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+    renderText(screen, "Хил", (370, 615), 30)
     while close:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_x:
+            if event.type == pygame.MOUSEMOTION:
+                screen.fill((0, 0, 0))
+                print(event.pos)
+                if event.pos[0] in range(100, 300) and event.pos[1] in range(600, 650):
+                    pygame.draw.rect(screen, (100, 50, 0), (100, 600, 200, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+                renderText(screen, "Бой", (170, 615), 30)
+
+                if event.pos[0] in range(300, 500) and event.pos[1] in range(600, 650):
+                    pygame.draw.rect(screen, (100, 50, 0), (300, 600, 200, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+                renderText(screen, "Хил", (370, 615), 30)
+
+                if pobag:
+                    renderText(screen, "Побег", (570, 615), 30)
+                    if event.pos[0] in range(500, 700) and event.pos[1] in range(600, 650):
+                        pygame.draw.rect(screen, (100, 50, 0), (500, 600, 200, 50), 1)
+                    else:
+                        pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.pos[0] in range(100, 300) and event.pos[1] in range(600, 650):
                     if fight:
                         fight = False
                         damage = col // 76
@@ -304,18 +362,55 @@ def ask_room2(screen, id, hp_monstor=10, attack_power=False):
                             close = False
                         col = 10
                     else:
+                        v = True
                         fight = True
+                if event.pos[0] in range(300, 500) and event.pos[1] in range(600, 650):
+                    if hill >= 1:
+                        hill -= 1
+                        hp += 3
+                if pobag:
+                    if event.pos[0] in range(500, 700) and event.pos[1] in range(600, 650):
+                        if pobag:
+                            close = False
+                            pobeg = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_z:
+                    if fight:
+                        fight = False
+                        damage = col // 76
+                        hp_monstor -= damage + bonus_power
+                        if hp_monstor <= 0:
+                            close = False
+                        hp -= attack_power
+                        v = False
+                        if hp <= 0:
+                            close = False
+                        col = 10
+                        screen.fill((0, 0, 0))
+
                 if event.key == pygame.K_a:
-                    close = False
-                    pobeg = False
+                    if pobag:
+                        close = False
+                        pobeg = False
+                        lvl -= 10
+                        hp -= 2
                 if event.key == pygame.K_s:
                     if hill >= 1:
                         hill -= 1
                         hp += 3
-        screen.fill((0, 0, 0))
+            if pobag:
+                pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+                renderText(screen, "Побег", (570, 615), 30)
+            pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+            renderText(screen, "Бой", (170, 615), 30)
+            pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+            renderText(screen, "Хил", (370, 615), 30)
+        if v:
+            screen.fill((0, 0, 0))
         if flag_1:
             font = pygame.font.Font(None, 50)
-            text = font.render('Вы нанесли ' + str(damage * 2 + bonus_power) + ' урона. Вам нанесли ' + str(attack_power), True,
+            text = font.render(
+                'Вы нанесли ' + str(damage * 2 + bonus_power) + ' урона. Вам нанесли ' + str(attack_power), True,
                 (255, 0, 0))
             place = text.get_rect(center=(400, 400))
             screen.blit(text, place)
@@ -331,15 +426,28 @@ def ask_room2(screen, id, hp_monstor=10, attack_power=False):
             flag_1 = True
             col = board.render_fight_1(screen, x, y, col, maxhp_monstor, hp_monstor, flag)
         else:
-            board.render_fight(screen, x, y, maxhp_monstor, hp_monstor)
+            board.render_fight(screen, x, y, maxhp_monstor, hp_monstor, pobag)
         pygame.display.flip()
+
+        '''
+        pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+        renderText(screen, "Бой", (570, 615), 30)
+
+        pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+        renderText(screen, "Хил", (370, 615), 30)
+
+        if pobag:
+            pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+            renderText(screen, "Побег", (170, 615), 30)
+        '''
+
     screen.fill((0, 0, 0))
     map[t][t1][0] = 12
     board.render(screen, x, y)
     print(pobeg)
     if pobeg:
         drop = random.randint(0, 5)
-        drop += (abs(map[id[0]][id[1]][1]) // 2)
+        drop += ((abs(map[id[0]][id[1]][1]) - 1) // 2)
         if drop < 4:
             renderText(screen, "Вы пoбедили! и присвоили золотую монету")
             money += 1
@@ -349,7 +457,178 @@ def ask_room2(screen, id, hp_monstor=10, attack_power=False):
         else:
             if len(stuff) <= lvl // 10 + 1:
                 drop2 = random.choice(weapons)
-                renderText(screen, "Отличный", drop2[0], "теперь твой!")
+                renderText(screen, str("Отличный " + drop2[0] + " теперь твой!"))
+                stuff.append(drop2)
+            else:
+                renderText(screen, "В сокровищах вы нашли зелье!")
+                hill += 1
+        lvl += 7
+    battleTheme.stop()
+    mainTheme.play()
+def mimic(screen, pobag=True):
+    mainTheme.stop()
+    global x, money, lvl, hill, maxhp
+    attack_power = (lvl + 5) // 2
+    dog_surf1 = pygame.transform.scale(load_image("chest.png", -1), (100, 100))
+    battleTheme.set_volume(0.1)
+    battleTheme.play()
+    global y
+    global hp
+    global t
+    global t1
+    global bonus_power
+    pobeg = True
+    flag = False
+    flag_1 = False
+    maxhp_monstor = maxhp
+    hp_monstor = maxhp_monstor
+    screen1 = pygame.display.set_mode(size)
+    fight = False
+    col = 10
+    close = True
+    damage = 0
+    v = False
+    if pobag:
+        pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+        renderText(screen, "Побег", (570, 615), 30)
+    pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+    renderText(screen, "Бой", (170, 615), 30)
+    pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+    renderText(screen, "Хил", (370, 615), 30)
+    while close:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.MOUSEMOTION:
+                screen.fill((0, 0, 0))
+                print(event.pos)
+                if event.pos[0] in range(100, 300) and event.pos[1] in range(600, 650):
+                    pygame.draw.rect(screen, (100, 50, 0), (100, 600, 200, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+                renderText(screen, "Бой", (170, 615), 30)
+
+                if event.pos[0] in range(300, 500) and event.pos[1] in range(600, 650):
+                    pygame.draw.rect(screen, (100, 50, 0), (300, 600, 200, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+                renderText(screen, "Хил", (370, 615), 30)
+
+                if pobag:
+                    renderText(screen, "Побег", (570, 615), 30)
+                    if event.pos[0] in range(500, 700) and event.pos[1] in range(600, 650):
+                        pygame.draw.rect(screen, (100, 50, 0), (500, 600, 200, 50), 1)
+                    else:
+                        pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.pos[0] in range(100, 300) and event.pos[1] in range(600, 650):
+                    if fight:
+                        fight = False
+                        damage = col // 76
+                        hp_monstor -= damage + bonus_power
+                        if hp_monstor <= 0:
+                            close = False
+                        hp -= attack_power
+                        if hp <= 0:
+                            close = False
+                        col = 10
+                    else:
+                        v = True
+                        fight = True
+                if event.pos[0] in range(300, 500) and event.pos[1] in range(600, 650):
+                    if hill >= 1:
+                        hill -= 1
+                        hp += 3
+                if pobag:
+                    if event.pos[0] in range(500, 700) and event.pos[1] in range(600, 650):
+                        if pobag:
+                            close = False
+                            pobeg = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_z:
+                    if fight:
+                        fight = False
+                        damage = col // 76
+                        hp_monstor -= damage + bonus_power
+                        if hp_monstor <= 0:
+                            close = False
+                        hp -= attack_power
+                        v = False
+                        if hp <= 0:
+                            close = False
+                        col = 10
+                        screen.fill((0, 0, 0))
+
+                if event.key == pygame.K_a:
+                    if pobag:
+                        close = False
+                        pobeg = False
+                        lvl -= 10
+                if event.key == pygame.K_s:
+                    if hill >= 1:
+                        hill -= 1
+                        hp += 3
+            if pobag:
+                pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+                renderText(screen, "Побег", (570, 615), 30)
+            pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+            renderText(screen, "Бой", (170, 615), 30)
+            pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+            renderText(screen, "Хил", (370, 615), 30)
+        if v:
+            screen.fill((0, 0, 0))
+        if flag_1:
+            font = pygame.font.Font(None, 50)
+            text = font.render(
+                'Вы нанесли ' + str(damage * 2 + bonus_power) + ' урона. Вам нанесли ' + str(attack_power), True,
+                (255, 0, 0))
+            place = text.get_rect(center=(400, 400))
+            screen.blit(text, place)
+        dog_rect1 = dog_surf1.get_rect(bottomright=(240, 180))
+        dog_rect = dog_surf.get_rect(bottomright=(770, 170))
+        screen1.blit(dog_surf1, dog_rect1)
+        screen1.blit(load_image("hero.png", -1), dog_rect)
+        if fight:
+            if col >= 770:
+                flag = True
+            if col <= 10:
+                flag = False
+            flag_1 = True
+            col = board.render_fight_1(screen, x, y, col, maxhp_monstor, hp_monstor, flag)
+        else:
+            board.render_fight(screen, x, y, maxhp_monstor, hp_monstor, pobag)
+        pygame.display.flip()
+
+        '''
+        pygame.draw.rect(screen, (150, 50, 0), (100, 600, 200, 50), 1)
+        renderText(screen, "Бой", (570, 615), 30)
+
+        pygame.draw.rect(screen, (150, 50, 0), (300, 600, 200, 50), 1)
+        renderText(screen, "Хил", (370, 615), 30)
+
+        if pobag:
+            pygame.draw.rect(screen, (150, 50, 0), (500, 600, 200, 50), 1)
+            renderText(screen, "Побег", (170, 615), 30)
+        '''
+
+    screen.fill((0, 0, 0))
+    map[t][t1][0] = 12
+    board.render(screen, x, y)
+    print(pobeg)
+    if pobeg:
+        drop = random.randint(0, 5)
+        drop += 5
+        if drop < 4:
+            renderText(screen, "Вы пoбедили! и присвоили золотую монету")
+            money += 1
+        elif 4 < drop < 7:
+            renderText(screen, "В сокровищах вы нашли зелье!")
+            hill += 1
+        else:
+            if len(stuff) <= lvl // 10 + 1:
+                drop2 = random.choice(weapons)
+                renderText(screen, str("Отличный " + drop2[0] + " теперь твой!"))
                 stuff.append(drop2)
             else:
                 renderText(screen, "В сокровищах вы нашли зелье!")
@@ -460,7 +739,7 @@ def ask_room3(screen, coords, atribut):
                             pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
                     else:
                         if money >= 8:
-                            renderText(screen, "ку1пить" + random.choice(weapons)[0] + " за 8 монет", (500, 320), 30)
+                            renderText(screen, "купить" + random.choice(weapons)[0] + " за 8 монет", (500, 320), 30)
                         else:
                             renderText(screen, "-------------", (500, 320), 30)
                         pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
@@ -512,6 +791,7 @@ def ask_room4(screen, coords):
 def ask_room5(screen, coords, id):
     global hp, ticket, lvl, hill
     # подозрительный
+
     global money, x, y, hill
     pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
     pygame.draw.rect(screen, (150, 50, 0), (500, 350, 250, 50), 1)
@@ -688,9 +968,17 @@ def ask_room10(screen, coords):
     pygame.draw.rect(screen, (255, 0, 0), coords, 50, 10)
 
 
-def ask_room11(screen):
-    renderText(screen, "Получено семечно солнечника")
-    seeds["солнечник"] += 1
+def ask_room11(screen, id):
+    if map[id[0]][id[1]][1] == -1:
+        renderText(screen, "Получено семечно солнечника")
+        seeds["солнечник"] += 1
+    elif map[id[0]][id[1]][1] == -2:
+        renderText(screen, "Получено семечно ведьминого стебля")
+        seeds["ведьмин стебель"] += 1
+    elif map[id[0]][id[1]][1] == -3:
+        renderText(screen, "Получено семечно хрустальника")
+        seeds["хрустальник"] += 1
+    map[id[0]][id[1]][1] = 0
 
 
 def ask_room13(screen):
@@ -698,6 +986,73 @@ def ask_room13(screen):
     hp -= 1
     lvl += 3
     renderText(screen, "В тебя попал дротик")
+
+
+def ask_room14(screen):
+    global hp, ticket, lvl, hill
+    # подозрительный
+    print("ASDADSasDads")
+    global money, x, y, hill
+    pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
+    pygame.draw.rect(screen, (150, 50, 0), (500, 350, 250, 50), 1)
+    renderText(screen, "Cварить", (500, 320), 30)
+    renderText(screen, "Выйти", (500, 370), 30)
+    runRoom = True
+    while runRoom:
+        pygame.draw.rect(screen, (150, 50, 0), (200, 550, 150, 150), 1)
+        pygame.draw.rect(screen, (150, 50, 0), (400, 550, 150, 150), 1)
+        pygame.draw.rect(screen, (150, 50, 0), (600, 550, 150, 150), 1)
+        if seeds["солнечник"] >= 1:
+            screen.blit(pygame.transform.scale(load_image("s1.png", -1), (100, 100)), (220, 550))
+        if seeds["ведьмин стебель"] >= 1:
+            screen.blit(pygame.transform.scale(load_image("s2.png", -1), (100, 100)), (420, 550))
+        if seeds["хрустальник"] >= 1:
+            screen.blit(pygame.transform.scale(load_image("s3.png", -1), (100, 100)), (620, 550))
+        pygame.display.flip()
+        for uy in pygame.event.get():
+            if uy.type == pygame.QUIT:
+                exit()
+            if uy.type == pygame.MOUSEMOTION:
+                screen.fill((0, 0, 0))
+                board.render(screen, x, y)
+
+                renderText(screen, "Сварить", (500, 320), 30)
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+                    pygame.draw.rect(screen, (150, 50, 255), (500, 300, 250, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (500, 300, 250, 50), 1)
+
+                renderText(screen, "Выйти", (500, 370), 30)
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                    pygame.draw.rect(screen, (150, 50, 255), (500, 350, 250, 50), 1)
+                else:
+                    pygame.draw.rect(screen, (150, 50, 0), (500, 350, 250, 50), 1)
+
+            if uy.type == pygame.MOUSEBUTTONDOWN:
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(300, 350):
+                    if seeds["солнечник"] >= 1 and seeds["ведьмин стебель"] >= 1 and seeds["хрустальник"] >= 1:
+                        seeds["солнечник"] -= 1
+                        seeds["ведьмин стебель"] -= 1
+                        seeds["хрустальник"] -= 1
+                        renderText(screen, str("Ммм выглядит... особенно.."))
+                        lvl += 5
+                    else:
+                        renderText(screen, str("Не хватает семян!"))
+
+                if uy.pos[0] in range(500, 750) and uy.pos[1] in range(350, 400):
+                    screen.fill((0, 0, 0))
+                    board.render(screen, x, y)
+                    runRoom = False
+                    return
+                # if uy.pos[0] in range(500, 750) and uy.pos[1] in range(400, 450):
+                #    screen.fill((0, 0, 0))
+                #   board.render(screen, x, y)
+                #   runRoom = False
+            if uy.type == pygame.KEYDOWN:
+                if uy.key == pygame.K_ESCAPE:
+                    screen.fill((0, 0, 0))
+                    board.render(screen, x, y)
+                    runRoom = False
 
 
 def start(screen, size, position=False):
@@ -759,7 +1114,7 @@ def dethscreen(screen, size, position=False):
 
 # sd
 def deth():
-    global maxhp, hp, stuff, ex
+    global maxhp, hp, ex, lvl, hill, ticket, stuff, money
     ex = False
     while True:
         pygame.display.flip()
@@ -781,6 +1136,7 @@ def deth():
     maxhp = 10
     hp = maxhp
     stuff = []
+    money = 0
     lvl = 10
     hill = 0
     ticket = 0
@@ -798,32 +1154,52 @@ class Dungeon:
         self.width = width
         self.height = height
         self.map = [
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]]]
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+            [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]]]
         map = self.map
         self.cor = [9, 10]
         self.colekt_room = {}
 
-    def render(self, screen, x1, y1):
-        global hp
+    def render(self, screen, x1, y1, booss=False):
+        global hp, lvl, hill
         global t
         global t1
         global money
@@ -831,12 +1207,13 @@ class Dungeon:
         global hp_boos
         f1 = 0
         y = 0
-        for j in range(20):
+        for j in range(39):
             f = 0
             x = 0
-            for i in range(20):
-                if self.map[x][y][0]:
-                    pygame.draw.rect(screen, (255, 255, 255), (f - x1, f1 - y1, 200, 200), 1)
+            for i in range(39):
+                if x < 40 and y < 40:
+                    if len(self.map[x][y]) > 1:
+                        pygame.draw.rect(screen, (255, 255, 255), (f - x1, f1 - y1, 200, 200), 1)
                 find_room(screen, (f - x1, f1 - y1,), (i, j))
                 f += 200
                 x += 1
@@ -848,12 +1225,14 @@ class Dungeon:
         pygame.draw.rect(screen, (255, 0, 0),
                          (770, hp1, 15, hp * 10))
         image = pygame.transform.scale(load_image("door.png", -1), (100, 100))
-        screen.blit(image, [self.colekt_room[self.id_exit][0] - x1, self.colekt_room[self.id_exit][1] - y1])
+        if booss:
+            screen.blit(image, [self.colekt_room[self.id_exit][0] - x1 - 200, self.colekt_room[self.id_exit][1] - y1])
+        else:
+            screen.blit(image, [self.colekt_room[self.id_exit][0] - x1, self.colekt_room[self.id_exit][1] - y1])
         self.map[self.colekt_room[self.id_exit][-1][0]][self.colekt_room[self.id_exit][-1][1]] = [32, 1]
         if self.id_exit == 50 and n:
             image = pygame.transform.scale(load_image("Boss.png", -1), (150 * 3, 150 * 3))
-            screen.blit(image,
-                        [self.colekt_room[self.id_exit][0] - x1 - 1650, self.colekt_room[self.id_exit][1] - y1 - 150])
+            screen.blit(image, [self.colekt_room[self.id_exit][0] - x1 - 1650, self.colekt_room[self.id_exit][1] - y1 - 150])
         y22 = 60
         if invent:
             screen.blit(pygame.transform.scale(load_image("inventory.png", -1), (200, 300)), (0, 0))
@@ -868,14 +1247,15 @@ class Dungeon:
         renderText(screen, str(hill), (340, 40), 40)
         if t == 10 and t1 == 10 and n:
             n = False
-            ask_room2(screen, hp_boos, 1, load_image("hero.png", -1))
+            ask_room2(screen, (t, t1), hp_boos, 1, False)
         pygame.draw.rect(screen, (255, 255, 255), (0, 0, int(size[0] / 100 * (lvl % 10)), 3))
-        renderText(screen, str(lvl//10), (size[0] - 70, 0), 40)
+        renderText(screen, str(lvl // 10), (size[0] - 70, 0), 40)
         if hp > maxhp:
             hp = maxhp
+        if lvl < 0:
+            lvl = 0
 
-
-    def render_fight(self, screen, x1, y1, maxhp_monstor, hp_monstor):
+    def render_fight(self, screen, x1, y1, maxhp_monstor, hp_monstor, pobag):
         pygame.draw.rect(screen, (255, 255, 255),
                          (770, maxhp1, 15, maxhp * 10))
         pygame.draw.rect(screen, (255, 0, 0),
@@ -885,9 +1265,6 @@ class Dungeon:
         pygame.draw.rect(screen, (255, 0, 0),
                          (10, 10, 15, hp_monstor * 10))
         font = pygame.font.Font(None, 50)
-        text = font.render('Нажмите X для боя.', True, (255, 0, 0))
-        place = text.get_rect(center=(200, 600))
-        screen.blit(text, place)
 
     def render_fight_1(self, screen, x1, y1, col, maxhp_monstor, hp_monstor, flag):
         pygame.draw.rect(screen, (255, 255, 255),
@@ -933,26 +1310,36 @@ class Dungeon:
                 self.cor1[0] = 2
             if self.cor1[1] > 20:
                 self.cor1[1] = 18
-            #for ig in map:
+            # for ig in map:
             #    for ad in ig:
             #        print("*" if ad[0] else ".", end="")
             #    print()
-            if self.map[self.cor1[0] + 1][self.cor1[1]][0]:
-                col_sos += 1
-            if self.map[self.cor1[0] - 1][self.cor1[1]][0]:
-                col_sos += 1
-            if self.map[self.cor1[0]][self.cor1[1] + 1][0]:
-                col_sos += 1
-            if self.map[self.cor1[0]][self.cor1[1] - 1][0]:
-                col_sos += 1
-            if self.map[self.cor1[0] + 1][self.cor1[1] - 1][0]:
-                col_sos += 1
-            if self.map[self.cor1[0] - 1][self.cor1[1] + 1][0]:
-                col_sos += 1
-            if self.map[self.cor1[0] + 1][self.cor1[1] + 1][0]:
-                col_sos += 1
-            if self.map[self.cor1[0] - 1][self.cor1[1] - 1][0]:
-                col_sos += 1
+            print(*self.map, sep='\n')
+            print(self.cor1)
+            if len(self.map[self.cor1[0] + 1][self.cor1[1]]) == 2:
+                if self.map[self.cor1[0] + 1][self.cor1[1]][0]:
+                    col_sos += 1
+            if len(self.map[self.cor1[0] - 1][self.cor1[1]]) == 2:
+                if self.map[self.cor1[0] - 1][self.cor1[1]][0]:
+                    col_sos += 1
+            if len(self.map[self.cor1[0]][self.cor1[1] + 1]) == 2:
+                if self.map[self.cor1[0]][self.cor1[1] + 1][0]:
+                    col_sos += 1
+            if len(self.map[self.cor1[0]][self.cor1[1] - 1]) == 2:
+                if self.map[self.cor1[0]][self.cor1[1] - 1][0]:
+                    col_sos += 1
+            if len(self.map[self.cor1[0] + 1][self.cor1[1] - 1]) == 2:
+                if self.map[self.cor1[0] + 1][self.cor1[1] - 1][0]:
+                    col_sos += 1
+            if len(self.map[self.cor1[0] - 1][self.cor1[1] + 1]) == 2:
+                if self.map[self.cor1[0] - 1][self.cor1[1] + 1][0]:
+                    col_sos += 1
+            if len(self.map[self.cor1[0] + 1][self.cor1[1] + 1]) == 2:
+                if self.map[self.cor1[0] + 1][self.cor1[1] + 1][0]:
+                    col_sos += 1
+            if len(self.map[self.cor1[0] - 1][self.cor1[1] - 1]) == 2:
+                if self.map[self.cor1[0] - 1][self.cor1[1] - 1][0]:
+                    col_sos += 1
             if col_sos < max_n:
                 if not self.map[self.cor1[0]][self.cor1[1]][0]:
                     nomber_room += 1
@@ -996,7 +1383,7 @@ map_boos = [
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-    [[0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [1], [1], [0], [0], [0], [0], [0], [0], [0], [0]],
+    [[0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [1, 6], [1], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [1], [1], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [1], [1], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [1], [1], [0], [0], [0], [0], [0], [0], [0], [0]],
@@ -1005,6 +1392,7 @@ map_boos = [
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [1], [1], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [1], [1], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [1], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
+    [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]]]
 while True:
     pygame.display.flip()
@@ -1026,11 +1414,10 @@ im = pygame.transform.scale(load_image('heroImage.png', -1), (250, 100))
 heroImage = []
 floorImage = []
 for i in range(4):
-    rect = pygame.Rect(0, 0, im.get_width() // 4,
-                       im.get_height())
+    rect = pygame.Rect(0, 0, im.get_width() // 4, im.get_height())
     frame_location = (rect.w * i, 0)
     heroImage.append(im.subsurface(pygame.Rect(frame_location, rect.size)))
-pers = 0
+pers = 1
 if pers == 1:
     dog_surf = heroImage[0]
 else:
@@ -1044,7 +1431,7 @@ for i in range(4):
         floorImage.append(im.subsurface(pygame.Rect(frame_location, rect.size)))
 hallo.stop()
 monsters = []
-mNames = ["m0.png", "m1.png", "m2.png", "m3.png", "m4.png", "m5.png"]
+mNames = ["m0.png", "m1.png", "m2.png", "m3.png", "m4.png", "m5.png", 'Boss.png']
 for i in mNames:
     monsters.append(pygame.transform.scale(load_image(i, -1), (100, 100)))
 while floor != 60:
@@ -1053,12 +1440,11 @@ while floor != 60:
     x = 1475
     y = 1675
     hp_boos += 2
-
     if floor % 6 == 0:
         board.generation()
         board.boos()
         board.id_exit = 50
-        board.colekt_room[50] = [18 * 200 + 25, 10 * 200 + 25, [18, 10]]
+        board.colekt_room[50] = [19 * 200 + 25, 10 * 200 + 25, [18, 10]]
         n = True
     else:
         board.generation()
@@ -1067,23 +1453,19 @@ while floor != 60:
     z = 500
     transition = False
     x1, y1 = 9, 10
-
-    board.render(screen, x, y)
+    if floor % 6 == 0:
+        board.render(screen, x, y, True)
+    else:
+        board.render(screen, x, y)
     while True:
         for event in pygame.event.get():
+            water = False
             if event.type == pygame.QUIT:
                 exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_UP or event.key == pygame.K_w:
                     if map[x1][y1][0] == 5:
-                        if ticket >= 1:
-                            ticket -= 1
-                        else:
-                            if hill >= 1:
-                                hill -= 1
-                                renderText(screen, "Уплывая вы обронили зелье!")
-                            else:
-                                renderText(screen, "вы без проблем уплыли")
+                        water = True
                     if pers:
                         dog_surf = heroImage[3]
                     t1 -= 1
@@ -1094,10 +1476,13 @@ while floor != 60:
                     else:
                         t1 += 1
                     screen.fill((0, 0, 0))
-                    board.render(screen, x, y)
-
-                if event.key == pygame.K_DOWN:
+                    if floor % 6 == 0:
+                        board.render(screen, x, y, True)
+                    else:
+                        board.render(screen, x, y)
                     if map[x1][y1][0] == 5:
+                        renderText(screen, "Потоп! надо спасаться!")
+                    if water:
                         if ticket >= 1:
                             ticket -= 1
                         else:
@@ -1106,6 +1491,9 @@ while floor != 60:
                                 renderText(screen, "Уплывая вы обронили зелье!")
                             else:
                                 renderText(screen, "вы без проблем уплыли")
+                if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    if map[x1][y1][0] == 5:
+                        water = True
                     if pers:
                         dog_surf = heroImage[1]
                     tap.play()
@@ -1116,9 +1504,13 @@ while floor != 60:
                     else:
                         t1 -= 1
                     screen.fill((0, 0, 0))
-                    board.render(screen, x, y)
-                if event.key == pygame.K_LEFT:
+                    if floor % 6 == 0:
+                        board.render(screen, x, y, True)
+                    else:
+                        board.render(screen, x, y)
                     if map[x1][y1][0] == 5:
+                        renderText(screen, "Потоп! надо спасаться!")
+                    if water:
                         if ticket >= 1:
                             ticket -= 1
                         else:
@@ -1127,6 +1519,9 @@ while floor != 60:
                                 renderText(screen, "Уплывая вы обронили зелье!")
                             else:
                                 renderText(screen, "вы без проблем уплыли")
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    if map[x1][y1][0] == 5:
+                        water = True
                     if pers:
                         dog_surf = heroImage[2]
                     tap.play()
@@ -1137,9 +1532,13 @@ while floor != 60:
                     else:
                         t += 1
                     screen.fill((0, 0, 0))
-                    board.render(screen, x, y)
-                if event.key == pygame.K_RIGHT:
+                    if floor % 6 == 0:
+                        board.render(screen, x, y, True)
+                    else:
+                        board.render(screen, x, y)
                     if map[x1][y1][0] == 5:
+                        renderText(screen, "Потоп! надо спасаться!")
+                    if water:
                         if ticket >= 1:
                             ticket -= 1
                         else:
@@ -1148,6 +1547,9 @@ while floor != 60:
                                 renderText(screen, "Уплывая вы обронили зелье!")
                             else:
                                 renderText(screen, "вы без проблем уплыли")
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    if map[x1][y1][0] == 5:
+                        water = True
                     if pers:
                         dog_surf = heroImage[0]
                     tap.play()
@@ -1158,10 +1560,27 @@ while floor != 60:
                     else:
                         t -= 1
                     screen.fill((0, 0, 0))
-                    board.render(screen, x, y)
+                    if floor % 6 == 0:
+                        board.render(screen, x, y, True)
+                    else:
+                        board.render(screen, x, y)
+                    if map[x1][y1][0] == 5:
+                        renderText(screen, "Потоп! надо спасаться!")
+                    if water:
+                        if ticket >= 1:
+                            ticket -= 1
+                        else:
+                            if hill >= 1:
+                                hill -= 1
+                                renderText(screen, "Уплывая вы обронили зелье!")
+                            else:
+                                renderText(screen, "вы без проблем уплыли")
                 if event.key == pygame.K_z:
                     screen.fill((0, 0, 0))
-                    board.render(screen, x, y)
+                    if floor % 6 == 0:
+                        board.render(screen, x, y, True)
+                    else:
+                        board.render(screen, x, y)
                     ask_room(screen, (600, 600), (x1, y1))
                 elif map[x1][y1][0] == 2 or map[x1][y1][0] == 13:
                     ask_room(screen, (600, 600), (x1, y1))
@@ -1180,14 +1599,16 @@ while floor != 60:
                     else:
                         pers = 1
             if event.type == pygame.MOUSEBUTTONDOWN:
-
                 if event.pos[0] in range(0, 200) and event.pos[1] in range(0, 50):
                     if invent:
                         invent = False
                     else:
                         invent = True
                     screen.fill((0, 0, 0))
-                    board.render(screen, x, y)
+                    if floor % 6 == 0:
+                        board.render(screen, x, y, True)
+                    else:
+                        board.render(screen, x, y)
         bonus_power = sum([i[1] for i in stuff])
         if hp <= 0:
             deth()
@@ -1203,7 +1624,10 @@ while floor != 60:
             transition = False
             x1, y1 = 9, 10
             dog_surf = load_image('Седнев.jpg', -1)
-            board.render(screen, x, y)
+            if floor % 6 == 0:
+                board.render(screen, x, y, True)
+            else:
+                board.render(screen, x, y)
         if transition:
             floor += 1
             transition = False
