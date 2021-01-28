@@ -723,7 +723,7 @@ def ask_room3(screen, coords, atribut):
         else:
             renderText(screen, "-------------", (500, 320), 30)
         renderText(screen, "купить зелье - 2 монеты", (500, 370), 30)
-        renderText(screen, "Досвидания", (500, 420), 30)
+        renderText(screen, "До свидания", (500, 420), 30)
         runRoom = True
         while runRoom:
 
@@ -1019,8 +1019,23 @@ def ask_room7(screen, coords, id):
 
 
 def ask_room8(screen, coords, id):
-    pass
-
+    global coordinat
+    global x
+    global y
+    global t
+    global t1
+    global c1
+    global x1
+    global y1
+    c1 = True
+    c = random.choice(list(coordinat.keys()))
+    print(coordinat)
+    x = coordinat[c][1]
+    y = coordinat[c][0]
+    t = coordinat[c][3]
+    t1 = coordinat[c][2]
+    x1 = coordinat[c][3]
+    y1 = coordinat[c][2]
 
 def ask_room9(screen, coords, id):
     global hp, money
@@ -1039,7 +1054,7 @@ def ask_room9(screen, coords, id):
 
 def ask_room10(screen, coords, id):
     global hp, bonus_def, bonus_dam
-    renderText(screen, "Вы возлагаете свои молитвы")
+    renderText(screen, "Вы возносите свои молитвы")
     wait()
     a = random.randint(0, 2)
     if a == 0:
@@ -1521,6 +1536,7 @@ hallo.play(loops=600)
 hp_boos = 0
 bonus_def = 0
 bonus_dam = 0
+c1 = False
 map_boos = [
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
@@ -1597,6 +1613,17 @@ while floor != 60:
         n = True
     else:
         board.generation()
+    coordinat = {}
+    y_1 = 0
+    h = 0
+    for i in map:
+        x_1 = 0
+        for j in i:
+            if len(map[y_1][x_1]) == 2:
+                h += 1
+                coordinat[h] = [200 * x_1 + 75 - 400, 200 * y_1 + 75 - 400, x_1, y_1]
+            x_1 += 1
+        y_1 += 1
     t = 9
     t1 = 10
     z = 500
@@ -1607,6 +1634,10 @@ while floor != 60:
     else:
         board.render(screen, x, y)
     while True:
+        if c1:
+            screen.fill((0, 0, 0))
+            board.render(screen, x, y)
+            c1 = False
         for event in pygame.event.get():
             water = False
             if event.type == pygame.QUIT:
