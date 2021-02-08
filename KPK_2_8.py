@@ -353,7 +353,10 @@ def ask_room2(screen, id, hp_monstor=15, attack_power=False, pobag=True):
                 if event.pos[0] in range(100, 300) and event.pos[1] in range(600, 650):
                     if fight:
                         fight = False
-                        damage = 1
+                        damage = col // 76
+                        if damage > 5:
+                            damage = damage - (damage - 5)
+                        damage //= 2
                         hp_monstor -= damage + bonus_power + bonus_dam
                         bonus_dam = 0
                         if hp_monstor <= 0:
@@ -387,10 +390,12 @@ def ask_room2(screen, id, hp_monstor=15, attack_power=False, pobag=True):
                 if event.key == pygame.K_z:
                     if fight:
                         fight = False
-                        damage = 1
+                        damage = col // 76
+                        if damage > 5:
+                            damage = 10 - damage
+                        damage //= 2
                         lb = damage + bonus_power + bonus_dam  # урон от еффекта
                         ld = 0  # защита от щита
-                        print(damage + bonus_power + bonus_dam)
                         hp_monstor -= damage + bonus_power + bonus_dam
                         bonus_dam = 0
                         if hp_monstor <= 0:
@@ -452,8 +457,12 @@ def ask_room2(screen, id, hp_monstor=15, attack_power=False, pobag=True):
                 screen.blit(text, place)
         dog_rect1 = dog_surf1.get_rect(bottomright=(240, 180))
         dog_rect = dog_surf.get_rect(bottomright=(770, 170))
-        screen1.blit(dog_surf1, dog_rect1)
-        screen1.blit(load_image("hero.png", -1), dog_rect)
+        if pobag:
+            screen1.blit(dog_surf1, dog_rect1)
+        else:
+            screen1.blit(load_image("Boss.png", -1), [0, 0, 10, 10])
+
+        screen1.blit(load_image("hero.png", -1), [650, 50, 10, 10])
         if fight:
             if col >= 770:
                 flag = True
@@ -522,7 +531,6 @@ def mimic(screen, pobag=True):
     flag = False
     flag_1 = False
     maxhp_monstor = maxhp / 2
-
     hp_monstor = maxhp_monstor
     screen1 = pygame.display.set_mode(size)
     fight = False
@@ -543,7 +551,6 @@ def mimic(screen, pobag=True):
                 exit()
             if event.type == pygame.MOUSEMOTION:
                 screen.fill((0, 0, 0))
-
                 if event.pos[0] in range(100, 300) and event.pos[1] in range(600, 650):
                     pygame.draw.rect(screen, (100, 50, 0), (100, 600, 200, 50), 1)
                 else:
@@ -560,7 +567,10 @@ def mimic(screen, pobag=True):
                 if event.pos[0] in range(100, 300) and event.pos[1] in range(600, 650):
                     if fight:
                         fight = False
-                        damage = 1
+                        print(col)
+                        damage = col // 126
+                        if damage > 5:
+                            damage = 10 - damage
                         hp_monstor -= damage + bonus_power + bonus_dam
                         bonus_dam = 0
                         if hp_monstor <= 0:
@@ -594,10 +604,11 @@ def mimic(screen, pobag=True):
                 if event.key == pygame.K_z:
                     if fight:
                         fight = False
-                        damage = 1
+                        damage = col // 126
+                        if damage > 5:
+                            damage = 10 - damage
                         lb = damage + bonus_power + bonus_dam  # урон от еффекта
                         ld = 0  # защита от щита
-                        print(damage + bonus_power + bonus_dam)
                         hp_monstor -= damage + bonus_power + bonus_dam
                         bonus_dam = 0
                         if hp_monstor <= 0:
@@ -1019,8 +1030,23 @@ def ask_room7(screen, coords, id):
 
 
 def ask_room8(screen, coords, id):
-    pass
-
+    global coordinat
+    global x
+    global y
+    global t
+    global t1
+    global c1
+    global x1
+    global y1
+    c1 = True
+    c = random.choice(list(coordinat.keys()))
+    print(coordinat)
+    x = coordinat[c][1]
+    y = coordinat[c][0]
+    t = coordinat[c][3]
+    t1 = coordinat[c][2]
+    x1 = coordinat[c][3]
+    y1 = coordinat[c][2]
 
 def ask_room9(screen, coords, id):
     global hp, money
@@ -1429,9 +1455,9 @@ class Dungeon:
         pygame.draw.rect(screen, (0, 255, 0),
                          (col, 600, 15, 75), 0)
         if flag:
-            col -= 2
+            col -= 4
         else:
-            col += 2
+            col += 4
         return col
 
     def generation(self):
@@ -1521,6 +1547,7 @@ hallo.play(loops=600)
 hp_boos = 0
 bonus_def = 0
 bonus_dam = 0
+c1 = False
 map_boos = [
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
     [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
@@ -1597,6 +1624,17 @@ while floor != 60:
         n = True
     else:
         board.generation()
+    coordinat = {}
+    y_1 = 0
+    h = 0
+    for i in map:
+        x_1 = 0
+        for j in i:
+            if len(map[y_1][x_1]) == 2:
+                h += 1
+                coordinat[h] = [200 * x_1 + 75 - 400, 200 * y_1 + 75 - 400, x_1, y_1]
+            x_1 += 1
+        y_1 += 1
     t = 9
     t1 = 10
     z = 500
@@ -1607,6 +1645,10 @@ while floor != 60:
     else:
         board.render(screen, x, y)
     while True:
+        if c1:
+            screen.fill((0, 0, 0))
+            board.render(screen, x, y)
+            c1 = False
         for event in pygame.event.get():
             water = False
             if event.type == pygame.QUIT:
